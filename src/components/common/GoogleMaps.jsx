@@ -64,7 +64,7 @@ const GoogleMaps = ({
     // Load Google Maps API if not already loaded
     if (!window.google) {
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCLimABKx5zogyMamZo-t1w8X4wlsM2m_8&libraries=places`;
       script.async = true;
       script.onload = initializeMap;
       script.onerror = () => setError("Failed to load Google Maps API");

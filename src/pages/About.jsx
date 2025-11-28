@@ -55,28 +55,28 @@ const About = () => {
 
   const team = [
     {
-      name: 'Sarah Wanjiku',
+      name: 'Brian Kitainge',
       position: 'CEO & Founder',
       image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop&crop=face',
-      bio: 'With over 15 years in real estate, Sarah founded Kejamatch to revolutionize property transactions in Kenya.'
+      bio: 'With over 15 years in real estate, Brian founded Kejamatch to revolutionize property transactions in Kenya.'
     },
     {
-      name: 'James Kimani',
+      name: 'Gasper Barmao',
       position: 'Head of Sales',
       image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face',
-      bio: 'James leads our sales team with expertise in luxury properties and commercial real estate.'
+      bio: 'Gasper leads our sales team with expertise in luxury properties and commercial real estate.'
     },
     {
-      name: 'Mary Njeri',
+      name: 'Faith Kucher',
       position: 'Property Manager',
       image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face',
-      bio: 'Mary ensures our clients receive exceptional property management services with attention to detail.'
+      bio: 'Faith ensures our clients receive exceptional property management services with attention to detail.'
     },
     {
-      name: 'David Ochieng',
+      name: 'Maryanne Mureithi',
       position: 'Investment Advisor',
       image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=300&fit=crop&crop=face',
-      bio: 'David helps clients make informed investment decisions in the Kenyan real estate market.'
+      bio: 'Maryanne helps clients make informed investment decisions in the Kenyan real estate market.'
     }
   ];
 
@@ -113,9 +113,9 @@ const About = () => {
       <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-secondary/70 z-10"></div>
+          <div className="absolute inset-0 z-10"></div>
           <img 
-            src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=1920&h=1080&auto=format&fit=crop&q=60&ixlib=rb-4.1.0" 
+            src="https://images.unsplash.com/photo-1585914641050-fa9883c4e21c?w=1920&h=1080&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OTF8fHJlYWwlMjBlc3RhdGV8ZW58MHx8MHx8fDA%3D" 
             alt="Professional team meeting" 
             className="w-full h-full object-cover"
           />
@@ -164,7 +164,7 @@ const About = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.8 }}
             >
-              About <span className="bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">Kejamatch</span>
+              About <span className="text-accent">Kejamatch</span>
             </motion.h1>
             
             <motion.p 
@@ -176,33 +176,13 @@ const About = () => {
               Your trusted partner in finding the perfect home and making smart real estate investments in Kenya
             </motion.p>
 
-            {/* Stats */}
-            {/* <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6, duration: 0.8 }}
-              className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-12"
-            >
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={index}
-                  whileHover={{ scale: 1.05 }}
-                  className="text-white"
-                >
-                  <div className="flex items-center justify-center mb-2">
-                    <stat.icon className="text-accent w-8 h-8" />
-                  </div>
-                  <div className="text-3xl font-bold">{stat.value}</div>
-                  <div className="text-sm opacity-90">{stat.label}</div>
-                </motion.div>
-              ))}
-            </motion.div> */}
+            
           </motion.div>
         </div>
       </section>
 
       {/* Mission and Vision Section */}
-      <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
+      <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -225,7 +205,7 @@ const About = () => {
               viewport={{ once: true }}
               className="text-center lg:text-left"
             >
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-secondary to-accent rounded-full mb-6 mx-auto lg:mx-0">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-secondary rounded-full mb-6 mx-auto lg:mx-0">
                 <Target className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-3xl font-bold text-primary mb-4">Our Mission</h3>
@@ -241,7 +221,7 @@ const About = () => {
               viewport={{ once: true }}
               className="text-center lg:text-left"
             >
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full mb-6 mx-auto lg:mx-0">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-500 rounded-full mb-6 mx-auto lg:mx-0">
                 <Eye className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-3xl font-bold text-primary mb-4">Our Vision</h3>
@@ -305,16 +285,16 @@ const About = () => {
                   alt="Team collaboration"
                   className="rounded-2xl shadow-2xl"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent rounded-2xl"></div>
+                <div className="absolute inset-0 bg-primary/20 rounded-2xl"></div>
               </div>
               
               {/* Floating stats card */}
-              <motion.div
+              {/* <motion.div
                 whileHover={{ scale: 1.05 }}
                 className="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-xl p-6 border"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
                     <Award className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -322,14 +302,14 @@ const About = () => {
                     <div className="text-sm text-gray-600">Years of Excellence</div>
                   </div>
                 </div>
-              </motion.div>
+              </motion.div> */}
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* Core Values Section */}
-      <section className="py-20 bg-gradient-to-r from-accent/10 to-secondary/10">
+      <section className="py-20 bg-accent/10">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -355,7 +335,7 @@ const About = () => {
                 whileHover={{ scale: 1.05 }}
                 className="bg-white rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 text-center"
               >
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-secondary to-accent rounded-full mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-secondary rounded-full mb-6">
                   <value.icon className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-primary mb-4">{value.title}</h3>
@@ -391,7 +371,7 @@ const About = () => {
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
                 whileHover={{ scale: 1.05 }}
-                className="bg-gradient-to-b from-gray-50 to-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 text-center"
+                className="bg-gray-50 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 text-center"
               >
                 <img 
                   src={member.image}
@@ -459,49 +439,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* Contact CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-primary to-dark">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center text-white max-w-3xl mx-auto"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Ready to Get Started?</h2>
-            <p className="text-xl text-white/90 mb-8">
-              Let us help you find your dream property or answer any questions you might have about our services.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-              <motion.a
-                href="tel:+254721860371"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-gradient-to-r from-secondary to-accent text-white px-8 py-4 rounded-full font-semibold hover:shadow-lg transition-all duration-300 inline-flex items-center justify-center gap-2"
-              >
-                <Phone size={20} />
-                Call Us Now
-              </motion.a>
-              <motion.a
-                href="mailto:info@kejamatch.com"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="border-2 border-white text-white px-8 py-4 rounded-full font-semibold hover:bg-white hover:text-primary transition-all duration-300 inline-flex items-center justify-center gap-2"
-              >
-                <Mail size={20} />
-                Send Email
-              </motion.a>
-            </div>
-
-            <div className="flex items-center justify-center gap-2 text-white/80">
-              <MapPin size={16} />
-              <span>Serving Nairobi and surrounding areas</span>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+    
     </div>
   );
 };

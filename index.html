@@ -1,13 +1,138 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <!-- Basic Meta Tags -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  
+  <!-- SEO Meta Tags -->
+  <title>KejaMatch - Premium Real Estate Properties & BNBs in Kenya</title>
+  <meta name="description" content="Discover premium real estate properties, luxury homes, and top-rated BNBs in Kenya with KejaMatch. Your trusted partner for buying, selling, and renting properties across Nairobi, Mombasa, and beyond." />
+  <meta name="keywords" content="real estate Kenya, properties for sale Kenya, BNB Kenya, homes for rent Nairobi, luxury properties Kenya, KejaMatch, property investment Kenya" />
+  <meta name="author" content="KejaMatch" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow" />
+  
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://kejamatch.com/" />
+  
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="KejaMatch - Premium Real Estate Properties & BNBs in Kenya" />
+  <meta property="og:description" content="Discover premium real estate properties, luxury homes, and top-rated BNBs in Kenya with KejaMatch. Your trusted partner for property investment." />
+  <meta property="og:url" content="https://kejamatch.com/" />
+  <meta property="og:site_name" content="KejaMatch" />
+  <meta property="og:image" content="https://kejamatch.com/og-image.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="KejaMatch - Premium Real Estate in Kenya" />
+  <meta property="og:locale" content="en_KE" />
+  
+  <!-- Twitter Card Meta Tags -->
+  <!-- <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="KejaMatch - Premium Real Estate Properties & BNBs in Kenya" />
+  <meta name="twitter:description" content="Discover premium real estate properties, luxury homes, and top-rated BNBs in Kenya with KejaMatch." />
+  <meta name="twitter:image" content="https://kejamatch.com/twitter-card.jpg" />
+  <meta name="twitter:image:alt" content="KejaMatch Real Estate Platform" />
+  <meta name="twitter:site" content="@kejamatch" />
+  <meta name="twitter:creator" content="@kejamatch" /> -->
+  
+  <!-- Favicons -->
+  <link rel="icon" type="image/svg+xml" href="/clearbg.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#1e40af" />
+  
+  <!-- Structured Data - Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "KejaMatch",
+    "url": "https://kejamatch.com",
+    "logo": "https://kejamatch.com/logo.png",
+    "description": "Premium real estate platform connecting buyers, sellers, and renters across Kenya",
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "Kenya",
+      "addressLocality": "Nairobi"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "Customer Service",
+      "url": "https://kejamatch.com/contact"
+    },
+    "sameAs": [
+      "https://facebook.com/kejamatch",
+      "https://twitter.com/kejamatch",
+      "https://instagram.com/kejamatch",
+      "https://linkedin.com/company/kejamatch"
+    ]
+  }
+  </script>
+  
+  <!-- Structured Data - Website -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "KejaMatch",
+    "url": "https://kejamatch.com",
+    "description": "Premium real estate properties and BNBs in Kenya",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://kejamatch.com/properties?search={search_term_string}"
+      },
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+  
+  <!-- Preconnect to external domains -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  
+  <!-- Preload critical resources -->
+  <link rel="preload" href="/src/main.jsx" as="script" />
+  
+  <!-- Geographic Meta Tags -->
+  <meta name="geo.region" content="KE" />
+  <meta name="geo.placename" content="Kenya" />
+  <meta name="geo.position" content="-1.286389;36.817223" />
+  <meta name="ICBM" content="-1.286389, 36.817223" />
+  
+  <!-- Additional SEO Meta -->
+  <meta name="rating" content="General" />
+  <meta name="distribution" content="Global" />
+  <meta name="language" content="English" />
+  <meta name="revisit-after" content="7 days" />
+  
+  <!-- Verification Tags (Add your actual verification codes) -->
+  <!-- <meta name="google-site-verification" content="your-google-verification-code" /> -->
+  <!-- <meta name="msvalidate.01" content="your-bing-verification-code" /> -->
+  
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+  
+  <!-- Google Analytics (Add your tracking ID) -->
+  <!-- 
+  <script async src="https://www.googletagmanager.com/gtag/js?id=GA_TRACKING_ID"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'GA_TRACKING_ID');
+  </script>
+  -->
+</body>
 </html>

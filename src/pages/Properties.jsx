@@ -201,31 +201,15 @@ const Properties = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
+      {/* Hero Section - Simplified without background hue */}
       <section className="relative h-[900px] flex items-center justify-center overflow-hidden">
-        {/* Background Image with Overlay */}
+        {/* Background Image with Simple Overlay */}
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/80 to-secondary/70 z-10"></div>
+          <div className="absolute inset-0 bg-black/40 z-10"></div>
           <img 
             src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1920&h=1080&auto=format&fit=crop&q=60" 
             alt="Modern Properties" 
             className="w-full h-full object-cover"
-          />
-        </div>
-
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 z-20">
-          <motion.div 
-            animate={{ 
-              scale: [1, 1.1, 1],
-              opacity: [0.3, 0.5, 0.3]
-            }}
-            transition={{ 
-              duration: 8,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-            className="absolute top-20 left-10 w-72 h-72 bg-accent/20 rounded-full blur-3xl"
           />
         </div>
 
@@ -237,14 +221,14 @@ const Properties = () => {
             transition={{ duration: 0.8 }}
             className="text-center max-w-4xl mx-auto"
           >
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-              Find Your Perfect <span className="bg-gradient-to-r from-accent to-secondary bg-clip-text text-transparent">Property</span>
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
+              Find Your Perfect <span className="text-accent">Property</span>
             </h1>
-            <p className="text-xl text-white/90 mb-8">
+            <p className="text-lg text-white/90 mb-8">
               Discover amazing properties across Kenya with our advanced search tools
             </p>
             
-            <div className="bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-2xl max-w-3xl mx-auto">
+            <div className="bg-white/95 backdrop-blur-md rounded-xl p-4 shadow-2xl max-w-3xl mx-auto">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex gap-2">
                   {['All', 'Buy', 'Rent', 'BNBs'].map((type) => (
@@ -253,7 +237,7 @@ const Properties = () => {
                       onClick={() => setSelectedType(type === 'All' ? '' : type)}
                       className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
                         (selectedType === type) || (type === 'All' && !selectedType)
-                          ? 'bg-gradient-to-r from-secondary to-accent text-white'
+                          ? 'bg-secondary text-white'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
@@ -292,7 +276,7 @@ const Properties = () => {
                 
                 <button
                   onClick={handleSearch}
-                  className="bg-gradient-to-r from-secondary to-accent text-white px-6 py-2 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center gap-2"
+                  className="bg-secondary text-white px-6 py-2 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center gap-2"
                 >
                   <Search size={18} />
                   Search
@@ -370,13 +354,14 @@ const Properties = () => {
           </motion.div>
 
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Filters Sidebar */}
+            {/* Filters Sidebar - Removed all sticky positioning */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               className={`lg:w-1/4 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}
             >
-              <div className="bg-white rounded-xl shadow-lg p-6 sticky top-6">
+              {/* Removed all sticky positioning */}
+              <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-bold text-primary flex items-center gap-2">
                     <SlidersHorizontal size={20} />

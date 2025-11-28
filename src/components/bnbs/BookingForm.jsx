@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Calendar, Users, Star } from 'lucide-react';
+import { X, Calendar, Users, Star, CheckCircle, AlertCircle } from 'lucide-react';
 
 const BookingForm = ({ 
   isOpen, 
@@ -17,7 +17,13 @@ const BookingForm = ({
     specialRequests: ''
   });
 
-  const handleSubmit = (e) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null);
+
+  // Backend API URL - Update this with your Render URL after deployment
+  const API_URL = import.meta.env.VITE_API_URL || 'https://kejamatch-backend.onrender.com';
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!bookingData.checkIn || !bookingData.checkOut) {
@@ -33,20 +39,68 @@ const BookingForm = ({
       return;
     }
 
-    if (onSubmit) {
-      onSubmit(bookingData);
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+
+    try {
+      const payload = {
+        propertyName: bnb.title,
+        propertyLocation: bnb.location,
+        name: bookingData.name,
+        email: bookingData.email,
+        phone: bookingData.phone,
+        checkIn: bookingData.checkIn,
+        checkOut: bookingData.checkOut,
+        guests: bookingData.guests,
+        nights: getNights(),
+        pricePerNight: bnb.price,
+        totalCost: calculateTotalCost(),
+        specialRequests: bookingData.specialRequests || ''
+      };
+
+      const response = await fetch(`${API_URL}/api/bookings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to submit booking');
+      }
+
+      setSubmitStatus('success');
+      
+      // Call parent onSubmit if provided
+      if (onSubmit) {
+        onSubmit(bookingData);
+      }
+
+      // Close modal after 3 seconds
+      setTimeout(() => {
+        onClose();
+        // Reset form
+        setBookingData({
+          checkIn: '',
+          checkOut: '',
+          guests: 1,
+          name: '',
+          email: '',
+          phone: '',
+          specialRequests: ''
+        });
+        setSubmitStatus(null);
+      }, 3000);
+
+    } catch (error) {
+      console.error('Booking submission error:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    // Reset form
-    setBookingData({
-      checkIn: '',
-      checkOut: '',
-      guests: 1,
-      name: '',
-      email: '',
-      phone: '',
-      specialRequests: ''
-    });
   };
 
   const calculateTotalCost = () => {
@@ -90,6 +144,31 @@ const BookingForm = ({
             </button>
           </div>
 
+          {/* Status Messages */}
+          {submitStatus === 'success' && (
+            <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-green-800">Booking request sent successfully!</p>
+                  <p className="text-sm text-green-700 mt-1">We'll contact you shortly to confirm your booking.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {submitStatus === 'error' && (
+            <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-red-800">Something went wrong</p>
+                  <p className="text-sm text-red-700 mt-1">Please try again or contact us directly.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Dates and Guests */}
             <div className="grid grid-cols-3 gap-4">
@@ -102,6 +181,7 @@ const BookingForm = ({
                   type="date"
                   value={bookingData.checkIn}
                   onChange={(e) => setBookingData({...bookingData, checkIn: e.target.value})}
+                  min={new Date().toISOString().split('T')[0]}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none"
                   required
                 />
@@ -115,6 +195,7 @@ const BookingForm = ({
                   type="date"
                   value={bookingData.checkOut}
                   onChange={(e) => setBookingData({...bookingData, checkOut: e.target.value})}
+                  min={bookingData.checkIn || new Date().toISOString().split('T')[0]}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent outline-none"
                   required
                 />
@@ -198,25 +279,25 @@ const BookingForm = ({
 
             {/* Booking Summary */}
             {bookingData.checkIn && bookingData.checkOut && (
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Booking Summary</h4>
-                <div className="space-y-1 text-sm">
+              <div className="bg-gray-50 p-4 rounded-lg border-l-4 border-secondary">
+                <h4 className="font-bold text-primary mb-3 text-lg">Booking Summary</h4>
+                <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span>Rate per night:</span>
-                    <span>KES {bnb.price.toLocaleString()}</span>
+                    <span className="text-gray-600">Rate per night:</span>
+                    <span className="font-semibold">KES {bnb.price.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Nights:</span>
-                    <span>{getNights()}</span>
+                    <span className="text-gray-600">Nights:</span>
+                    <span className="font-semibold">{getNights()}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Guests:</span>
-                    <span>{bookingData.guests}</span>
+                    <span className="text-gray-600">Guests:</span>
+                    <span className="font-semibold">{bookingData.guests}</span>
                   </div>
-                  <hr className="my-2" />
-                  <div className="flex justify-between font-semibold text-primary">
+                  <hr className="my-2 border-gray-300" />
+                  <div className="flex justify-between text-lg font-bold text-primary">
                     <span>Total:</span>
-                    <span>KES {calculateTotalCost().toLocaleString()}</span>
+                    <span className="text-secondary">KES {calculateTotalCost().toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -226,19 +307,28 @@ const BookingForm = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                disabled={isSubmitting}
+                className="flex-1 px-4 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
+                disabled={isSubmitting}
+                className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
                   bnb.instantBook
                     ? 'bg-gradient-to-r from-primary to-secondary text-white hover:shadow-lg'
                     : 'bg-gradient-to-r from-secondary to-accent text-white hover:shadow-lg'
                 }`}
               >
-                {bnb.instantBook ? 'Confirm Booking' : 'Send Request'}
+                {isSubmitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Sending...
+                  </>
+                ) : (
+                  <>{bnb.instantBook ? 'Confirm Booking' : 'Send Request'}</>
+                )}
               </button>
             </div>
           </form>

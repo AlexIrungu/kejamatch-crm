@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MapPin, 
   Bed, 
@@ -16,149 +17,114 @@ import {
   Shield,
   Search,
   Filter,
-  ChevronDown
+  ChevronDown,
+  Grid3X3,
+  List,
+  SlidersHorizontal,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Share2,
+  Award,
+  Zap
 } from 'lucide-react';
 import GoogleMaps from '../components/common/GoogleMaps';
 import BookingForm from '../components/bnbs/BookingForm';
+import LazyImage from '../components/common/LazyImage';
+import { bnbListings, searchBnbs, formatBnbPrice } from '../data/bnbs';
 
 const BNBs = () => {
   const [selectedBnb, setSelectedBnb] = useState(null);
   const [showBookingForm, setShowBookingForm] = useState(false);
-  const [filters, setFilters] = useState({
-    priceRange: [1000, 10000],
-    guests: 1,
-    propertyType: '',
-    amenities: []
-  });
-  const [bookingData, setBookingData] = useState({
+  const [viewMode, setViewMode] = useState('grid');
+  const [showFilters, setShowFilters] = useState(false);
+  const [currentImageIndexes, setCurrentImageIndexes] = useState({});
+  const [favorites, setFavorites] = useState(new Set());
+  const [filteredBnbs, setFilteredBnbs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  
+  const [searchFilters, setSearchFilters] = useState({
+    location: '',
     checkIn: '',
     checkOut: '',
     guests: 1,
-    name: '',
-    email: '',
-    phone: '',
-    specialRequests: ''
+    priceRange: [1000, 15000],
+    propertyTypes: [],
+    amenities: [],
+    ratings: 0,
+    instantBook: false
   });
 
-  const bnbListings = [
-    {
-      id: 1,
-      title: 'Cozy Studio in Karen',
-      location: 'Karen, Nairobi',
-      coordinates: { lat: -1.3194, lng: 36.7085 },
-      price: 3500,
-      rating: 4.8,
-      reviews: 124,
-      maxGuests: 2,
-      beds: 1,
-      baths: 1,
-      images: [
-        'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800',
-        'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800',
-        'https://images.unsplash.com/photo-1586105251261-72a756497a11?w=800'
-      ],
-      amenities: ['WiFi', 'Kitchen', 'AC', 'Parking', 'Pool'],
-      description: 'Beautiful studio apartment in the serene Karen area. Perfect for couples or solo travelers.',
-      host: {
-        name: 'Grace Mwangi',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
-        rating: 4.9,
-        verified: true
-      },
-      instantBook: true
-    },
-    {
-      id: 2,
-      title: 'Modern 2BR Apartment - Kilimani',
-      location: 'Kilimani, Nairobi',
-      coordinates: { lat: -1.2921, lng: 36.7857 },
-      price: 6000,
-      rating: 4.6,
-      reviews: 87,
-      maxGuests: 4,
-      beds: 2,
-      baths: 2,
-      images: [
-        'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800',
-        'https://images.unsplash.com/photo-1560448204-61dc36dc98c8?w=800',
-        'https://images.unsplash.com/photo-1574691250077-03a929faece5?w=800'
-      ],
-      amenities: ['WiFi', 'Kitchen', 'AC', 'Gym', 'Security'],
-      description: 'Spacious modern apartment in the heart of Kilimani with great city views.',
-      host: {
-        name: 'David Ochieng',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-        rating: 4.7,
-        verified: true
-      },
-      instantBook: false
-    },
-    {
-      id: 3,
-      title: 'Luxury Villa with Pool - Runda',
-      location: 'Runda, Nairobi',
-      coordinates: { lat: -1.2107, lng: 36.7622 },
-      price: 12000,
-      rating: 4.9,
-      reviews: 156,
-      maxGuests: 8,
-      beds: 4,
-      baths: 3,
-      images: [
-        'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800',
-        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800',
-        'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800'
-      ],
-      amenities: ['WiFi', 'Kitchen', 'Pool', 'Garden', 'Parking', 'Security'],
-      description: 'Stunning luxury villa perfect for families or groups. Private pool and beautiful garden.',
-      host: {
-        name: 'Sarah Kimani',
-        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
-        rating: 4.9,
-        verified: true
-      },
-      instantBook: true
-    },
-    {
-      id: 4,
-      title: 'Beachfront Cottage - Diani',
-      location: 'Diani Beach, Kwale',
-      coordinates: { lat: -4.2954, lng: 39.5751 },
-      price: 8500,
-      rating: 4.7,
-      reviews: 203,
-      maxGuests: 6,
-      beds: 3,
-      baths: 2,
-      images: [
-        'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800',
-        'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800',
-        'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800'
-      ],
-      amenities: ['WiFi', 'Kitchen', 'Beach Access', 'BBQ', 'Garden'],
-      description: 'Wake up to ocean views in this charming beachfront cottage in Diani Beach.',
-      host: {
-        name: 'Omar Hassan',
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-        rating: 4.8,
-        verified: true
-      },
-      instantBook: false
-    }
-  ];
+  
 
   const amenityIcons = {
     'WiFi': Wifi,
     'Kitchen': Coffee,
     'AC': Wind,
     'Parking': Car,
-    'Pool': '🏊',
+    'Pool': '🏊‍♂️',
     'TV': Tv,
     'Security': Shield,
-    'Gym': '🏋️',
+    'Gym': '🏋️‍♂️',
     'Garden': '🌺',
     'Beach Access': '🏖️',
     'BBQ': '🔥'
+  };
+
+  const propertyTypes = ['Studio', 'Apartment', 'House', 'Villa', 'Cottage'];
+  const availableAmenities = ['WiFi', 'Kitchen', 'AC', 'Parking', 'Pool', 'Gym', 'Security', 'Garden', 'BBQ', 'Beach Access'];
+
+  // Initialize filtered BNBs
+  useEffect(() => {
+    setFilteredBnbs(bnbListings);
+  }, []);
+
+  // Apply filters
+  // Replace your applyFilters function with:
+const applyFilters = () => {
+  setLoading(true);
+  
+  const filtered = searchBnbs(searchFilters);
+  
+  setTimeout(() => {
+    setFilteredBnbs(filtered);
+    setLoading(false);
+  }, 300);
+};
+
+  useEffect(() => {
+    applyFilters();
+  }, [searchFilters]);
+
+  const handleImageNavigation = (bnbId, direction) => {
+    const bnb = bnbListings.find(b => b.id === bnbId);
+    if (!bnb) return;
+
+    setCurrentImageIndexes(prev => {
+      const currentIndex = prev[bnbId] || 0;
+      let newIndex;
+      
+      if (direction === 'next') {
+        newIndex = currentIndex === bnb.images.length - 1 ? 0 : currentIndex + 1;
+      } else {
+        newIndex = currentIndex === 0 ? bnb.images.length - 1 : currentIndex - 1;
+      }
+      
+      return { ...prev, [bnbId]: newIndex };
+    });
+  };
+
+  const toggleFavorite = (bnbId) => {
+    setFavorites(prev => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(bnbId)) {
+        newFavorites.delete(bnbId);
+      } else {
+        newFavorites.add(bnbId);
+      }
+      return newFavorites;
+    });
   };
 
   const handleBooking = (bnb) => {
@@ -166,40 +132,21 @@ const BNBs = () => {
     setShowBookingForm(true);
   };
 
-  const handleBookingSubmit = (e) => {
-    e.preventDefault();
-    console.log('Booking submitted:', { ...bookingData, bnb: selectedBnb });
-    
-    // Calculate total nights and cost
-    const checkInDate = new Date(bookingData.checkIn);
-    const checkOutDate = new Date(bookingData.checkOut);
-    const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
-    const totalCost = nights * selectedBnb.price;
-    
-    alert(`Booking request sent! Total: KES ${totalCost.toLocaleString()} for ${nights} nights`);
-    setShowBookingForm(false);
-    setBookingData({
+  const clearAllFilters = () => {
+    setSearchFilters({
+      location: '',
       checkIn: '',
       checkOut: '',
       guests: 1,
-      name: '',
-      email: '',
-      phone: '',
-      specialRequests: ''
+      priceRange: [1000, 15000],
+      propertyTypes: [],
+      amenities: [],
+      ratings: 0,
+      instantBook: false
     });
   };
 
-  const calculateTotalCost = () => {
-    if (!bookingData.checkIn || !bookingData.checkOut || !selectedBnb) return 0;
-    
-    const checkInDate = new Date(bookingData.checkIn);
-    const checkOutDate = new Date(bookingData.checkOut);
-    const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
-    
-    return nights > 0 ? nights * selectedBnb.price : 0;
-  };
-
-  const mapMarkers = bnbListings.map(bnb => ({
+  const mapMarkers = filteredBnbs.map(bnb => ({
     lat: bnb.coordinates.lat,
     lng: bnb.coordinates.lng,
     title: bnb.title,
@@ -210,206 +157,499 @@ const BNBs = () => {
         <p class="text-xs text-gray-600 mb-2">${bnb.location}</p>
         <div class="flex justify-between items-center">
           <span class="text-xs">★ ${bnb.rating} (${bnb.reviews})</span>
-          <span class="font-bold text-blue-600 text-sm">KES ${bnb.price}/night</span>
+          <span class="font-bold text-secondary text-sm">KES ${bnb.price}/night</span>
         </div>
       </div>
-    `,
-    onClick: (marker) => {
-      const element = document.getElementById(`bnb-${bnb.id}`);
-      if (element) element.scrollIntoView({ behavior: 'smooth' });
-    }
+    `
   }));
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-blue-900 to-blue-700 py-24">
-        <div className="absolute inset-0 bg-black opacity-50"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="py-20 text-4xl md:text-6xl font-bold text-white mb-4">
-            Bed & Breakfasts
-          </h1>
-          <p className="text-xl md:text-2xl text-orange-400">
-            Unique stays and experiences await
-          </p>
+      {/* Hero Section with Search */}
+      <motion.section 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="relative h-[1000px] flex items-center justify-center overflow-hidden"
+      >
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 z-10"></div>
+          <img 
+            src="https://images.unsplash.com/photo-1736617936461-664d102e602c?w=1920&h=1080&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fGJuYnxlbnwwfHwwfHx8MA%3D%3D"
+            alt="Beautiful Accommodations" 
+            className="w-full h-full object-cover"
+          />
         </div>
-      </div>
 
-      {/* Search & Filters */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 text-gray-400" size={20} />
-              <input
-                type="text"
-                placeholder="Where do you want to stay?"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
+        <div className="container mx-auto px-4 relative z-30">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center max-w-4xl mx-auto"
+          >
+            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
+              Unique Stays & <span className="text-accent">Experiences</span>
+            </h1>
+            <p className="text-xl text-white/90 mb-8">
+              Discover amazing bed & breakfasts across Kenya
+            </p>
+            
+            {/* Enhanced Search Bar */}
+            <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-2xl">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 text-gray-400" size={20} />
+                  <input
+                    type="text"
+                    placeholder="Where are you going?"
+                    value={searchFilters.location}
+                    onChange={(e) => setSearchFilters({...searchFilters, location: e.target.value})}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent outline-none"
+                  />
+                </div>
+                
+                <input
+                  type="date"
+                  value={searchFilters.checkIn}
+                  onChange={(e) => setSearchFilters({...searchFilters, checkIn: e.target.value})}
+                  className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary outline-none"
+                />
+                
+                <input
+                  type="date"
+                  value={searchFilters.checkOut}
+                  onChange={(e) => setSearchFilters({...searchFilters, checkOut: e.target.value})}
+                  className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary outline-none"
+                />
+                
+                <select
+                  value={searchFilters.guests}
+                  onChange={(e) => setSearchFilters({...searchFilters, guests: parseInt(e.target.value)})}
+                  className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary outline-none"
+                >
+                  {[1,2,3,4,5,6,7,8].map(num => (
+                    <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <input
-                type="date"
-                value={bookingData.checkIn}
-                onChange={(e) => setBookingData({...bookingData, checkIn: e.target.value})}
-                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="Check-in"
-              />
-              <input
-                type="date"
-                value={bookingData.checkOut}
-                onChange={(e) => setBookingData({...bookingData, checkOut: e.target.value})}
-                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="Check-out"
-              />
-              <select
-                value={filters.guests}
-                onChange={(e) => setFilters({...filters, guests: parseInt(e.target.value)})}
-                className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                <option value={1}>1 Guest</option>
-                <option value={2}>2 Guests</option>
-                <option value={3}>3 Guests</option>
-                <option value={4}>4 Guests</option>
-                <option value={5}>5+ Guests</option>
-              </select>
-            </div>
-            <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
-              <Search size={20} />
-              Search
-            </button>
+          </motion.div>
+        </div>
+      </motion.section>
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Results Header with View Toggle */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4"
+        >
+          <div>
+            <h2 className="text-2xl font-bold text-primary mb-2">
+              {filteredBnbs.length} stays found
+            </h2>
+            <p className="text-gray-600">
+              {searchFilters.location && `in ${searchFilters.location}`}
+            </p>
           </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Listings */}
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {bnbListings.length} stays found
-              </h2>
-              <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                <Filter size={16} />
-                Filters
+          
+          <div className="flex items-center gap-4">
+            {/* View Mode Toggle */}
+            <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 ${viewMode === 'grid' ? 'bg-secondary text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors`}
+              >
+                <Grid3X3 size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 ${viewMode === 'list' ? 'bg-secondary text-white' : 'bg-white text-gray-600 hover:bg-gray-50'} transition-colors`}
+              >
+                <List size={18} />
               </button>
             </div>
+            
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <Filter size={16} />
+              Filters
+            </button>
+          </div>
+        </motion.div>
 
-            {bnbListings.map((bnb) => (
-              <div 
-                key={bnb.id}
-                id={`bnb-${bnb.id}`}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow"
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Filters Sidebar */}
+          <AnimatePresence>
+            {(showFilters || window.innerWidth >= 1024) && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className={`lg:col-span-1 ${showFilters ? 'block' : 'hidden lg:block'}`}
               >
-                <div className="md:flex">
-                  <div className="md:w-1/3 relative">
-                    <img 
-                      src={bnb.images[0]} 
-                      alt={bnb.title}
-                      className="w-full h-48 md:h-full object-cover"
-                    />
-                    <button className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors">
-                      <Heart size={16} className="text-gray-600" />
+                <div className="bg-white rounded-xl shadow-lg p-6 space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-primary">Filters</h3>
+                    <button
+                      onClick={clearAllFilters}
+                      className="text-secondary text-sm hover:text-secondary/80"
+                    >
+                      Clear All
                     </button>
                   </div>
-                  
-                  <div className="md:w-2/3 p-6">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h3 className="text-xl font-semibold text-gray-900 mb-1">{bnb.title}</h3>
-                        <p className="text-gray-600 flex items-center mb-2">
-                          <MapPin size={14} className="mr-1" />
-                          {bnb.location}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-blue-600">KES {bnb.price.toLocaleString()}</p>
-                        <p className="text-sm text-gray-600">per night</p>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-                      <span className="flex items-center">
-                        <Users size={14} className="mr-1" />
-                        {bnb.maxGuests} guests
-                      </span>
-                      <span className="flex items-center">
-                        <Bed size={14} className="mr-1" />
-                        {bnb.beds} beds
-                      </span>
-                      <span className="flex items-center">
-                        <Bath size={14} className="mr-1" />
-                        {bnb.baths} baths
-                      </span>
-                      <div className="flex items-center">
-                        <Star size={14} className="text-yellow-500 fill-current mr-1" />
-                        <span>{bnb.rating} ({bnb.reviews})</span>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {bnb.amenities.slice(0, 4).map((amenity, index) => {
-                        const IconComponent = amenityIcons[amenity];
-                        return (
-                          <div key={index} className="flex items-center bg-gray-100 px-2 py-1 rounded text-xs">
-                            {typeof IconComponent === 'string' ? (
-                              <span className="mr-1">{IconComponent}</span>
-                            ) : IconComponent && (
-                              <IconComponent size={12} className="mr-1" />
-                            )}
-                            {amenity}
-                          </div>
-                        );
+                  {/* Price Range */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Price Range (per night)
+                    </label>
+                    <input
+                      type="range"
+                      min="1000"
+                      max="15000"
+                      step="500"
+                      value={searchFilters.priceRange[1]}
+                      onChange={(e) => setSearchFilters({
+                        ...searchFilters,
+                        priceRange: [searchFilters.priceRange[0], parseInt(e.target.value)]
                       })}
-                      {bnb.amenities.length > 4 && (
-                        <span className="text-xs text-gray-500">+{bnb.amenities.length - 4} more</span>
-                      )}
-                    </div>
-
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">{bnb.description}</p>
-
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <img 
-                          src={bnb.host.avatar} 
-                          alt={bnb.host.name}
-                          className="w-8 h-8 rounded-full mr-2"
-                        />
-                        <div>
-                          <p className="text-sm font-medium">{bnb.host.name}</p>
-                          {bnb.host.verified && (
-                            <p className="text-xs text-green-600">✓ Verified Host</p>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <button className="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
-                          View Details
-                        </button>
-                        <button 
-                          onClick={() => handleBooking(bnb)}
-                          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                            bnb.instantBook
-                              ? 'bg-blue-600 text-white hover:bg-blue-700'
-                              : 'bg-orange-500 text-white hover:bg-orange-600'
-                          }`}
-                        >
-                          {bnb.instantBook ? 'Book Now' : 'Request Booking'}
-                        </button>
-                      </div>
+                      className="w-full slider"
+                    />
+                    <div className="flex justify-between text-sm text-gray-600 mt-2">
+                      <span>KES 1,000</span>
+                      <span>KES {searchFilters.priceRange[1].toLocaleString()}</span>
                     </div>
                   </div>
+
+                  {/* Property Types */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Property Type
+                    </label>
+                    <div className="space-y-2">
+                      {propertyTypes.map(type => (
+                        <label key={type} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={searchFilters.propertyTypes.includes(type)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSearchFilters({
+                                  ...searchFilters,
+                                  propertyTypes: [...searchFilters.propertyTypes, type]
+                                });
+                              } else {
+                                setSearchFilters({
+                                  ...searchFilters,
+                                  propertyTypes: searchFilters.propertyTypes.filter(t => t !== type)
+                                });
+                              }
+                            }}
+                            className="mr-2"
+                          />
+                          <span className="text-sm text-gray-700">{type}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Rating Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Minimum Rating
+                    </label>
+                    <div className="space-y-2">
+                      {[4.5, 4.0, 3.5, 0].map(rating => (
+                        <label key={rating} className="flex items-center">
+                          <input
+                            type="radio"
+                            name="rating"
+                            checked={searchFilters.ratings === rating}
+                            onChange={() => setSearchFilters({...searchFilters, ratings: rating})}
+                            className="mr-2"
+                          />
+                          <span className="text-sm text-gray-700 flex items-center">
+                            {rating > 0 ? (
+                              <>
+                                <Star size={14} className="text-yellow-500 fill-current mr-1" />
+                                {rating}+
+                              </>
+                            ) : 'Any rating'}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Instant Book */}
+                  <div>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={searchFilters.instantBook}
+                        onChange={(e) => setSearchFilters({...searchFilters, instantBook: e.target.checked})}
+                        className="mr-2"
+                      />
+                      <Zap size={16} className="mr-1 text-yellow-500" />
+                      <span className="text-sm text-gray-700">Instant Book only</span>
+                    </label>
+                  </div>
                 </div>
-              </div>
-            ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Listings */}
+          <div className={`${showFilters || window.innerWidth >= 1024 ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
+            <AnimatePresence>
+              {loading ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex justify-center items-center py-20"
+                >
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-secondary"></div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className={`grid gap-6 ${
+                    viewMode === 'grid' ? 'grid-cols-1' : 'grid-cols-1'
+                  }`}
+                >
+                  {filteredBnbs.map((bnb, index) => (
+                    <motion.div
+                      key={bnb.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                    >
+                      <div className={viewMode === 'list' ? 'md:flex' : ''}>
+                        {/* Image Section */}
+                        <div className={`relative ${viewMode === 'list' ? 'md:w-1/3' : ''}`}>
+                          <div className="relative h-64 group">
+                            <LazyImage
+                              src={bnb.images[currentImageIndexes[bnb.id] || 0]}
+                              alt={bnb.title}
+                              className="w-full h-full object-cover"
+                            />
+                            
+                            {/* Image Navigation */}
+                            {bnb.images.length > 1 && (
+                              <>
+                                <button
+                                  onClick={() => handleImageNavigation(bnb.id, 'prev')}
+                                  className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all"
+                                >
+                                  <ChevronLeft size={16} />
+                                </button>
+                                <button
+                                  onClick={() => handleImageNavigation(bnb.id, 'next')}
+                                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 hover:bg-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all"
+                                >
+                                  <ChevronRight size={16} />
+                                </button>
+                              </>
+                            )}
+
+                            {/* Image Dots */}
+                            {bnb.images.length > 1 && (
+                              <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-1">
+                                {bnb.images.map((_, imageIndex) => (
+                                  <div
+                                    key={imageIndex}
+                                    className={`w-2 h-2 rounded-full transition-colors ${
+                                      imageIndex === (currentImageIndexes[bnb.id] || 0)
+                                        ? 'bg-white'
+                                        : 'bg-white/50'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Favorite Button */}
+                            <button
+                              onClick={() => toggleFavorite(bnb.id)}
+                              className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors"
+                            >
+                              <Heart 
+                                size={16} 
+                                className={`transition-colors ${
+                                  favorites.has(bnb.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'
+                                }`}
+                              />
+                            </button>
+
+                            {/* Badges */}
+                            <div className="absolute top-3 left-3 flex flex-col gap-2">
+                              {bnb.instantBook && (
+                                <span className="bg-accent text-primary px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
+                                  <Zap size={12} />
+                                  Instant Book
+                                </span>
+                              )}
+                              {bnb.host.superhost && (
+                                <span className="bg-gradient-to-r from-secondary to-accent text-white px-2 py-1 rounded text-xs font-semibold flex items-center gap-1">
+                                  <Award size={12} />
+                                  Superhost
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Content Section */}
+                        <div className={`p-6 ${viewMode === 'list' ? 'md:w-2/3' : ''}`}>
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1">
+                              <h3 className="text-xl font-semibold text-primary mb-2 hover:text-secondary transition-colors cursor-pointer">
+                                {bnb.title}
+                              </h3>
+                              <p className="text-gray-600 flex items-center mb-2">
+                                <MapPin size={14} className="mr-1 text-secondary" />
+                                {bnb.location}
+                              </p>
+                            </div>
+                            <div className="text-right ml-4">
+                              <p className="text-2xl font-bold text-secondary">
+                                KES {bnb.price.toLocaleString()}
+                              </p>
+                              <p className="text-sm text-gray-600">per night</p>
+                            </div>
+                          </div>
+
+                          {/* Stats */}
+                          <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                            <span className="flex items-center">
+                              <Users size={14} className="mr-1" />
+                              {bnb.maxGuests} guests
+                            </span>
+                            <span className="flex items-center">
+                              <Bed size={14} className="mr-1" />
+                              {bnb.beds} beds
+                            </span>
+                            <span className="flex items-center">
+                              <Bath size={14} className="mr-1" />
+                              {bnb.baths} baths
+                            </span>
+                            <div className="flex items-center">
+                              <Star size={14} className="text-yellow-500 fill-current mr-1" />
+                              <span>{bnb.rating} ({bnb.reviews})</span>
+                            </div>
+                          </div>
+
+                          {/* Amenities */}
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {bnb.amenities.slice(0, 4).map((amenity, amenityIndex) => {
+                              const IconComponent = amenityIcons[amenity];
+                              return (
+                                <div key={amenityIndex} className="flex items-center bg-gray-100 px-3 py-1 rounded-full text-xs">
+                                  {typeof IconComponent === 'string' ? (
+                                    <span className="mr-1">{IconComponent}</span>
+                                  ) : IconComponent && (
+                                    <IconComponent size={12} className="mr-1" />
+                                  )}
+                                  {amenity}
+                                </div>
+                              );
+                            })}
+                            {bnb.amenities.length > 4 && (
+                              <span className="text-xs text-gray-500 px-2 py-1">
+                                +{bnb.amenities.length - 4} more
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                            {bnb.description}
+                          </p>
+
+                          {/* Host Info & Actions */}
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center">
+                              <img 
+                                src={bnb.host.avatar} 
+                                alt={bnb.host.name}
+                                className="w-10 h-10 rounded-full mr-3 border-2 border-gray-100"
+                              />
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-medium text-primary">{bnb.host.name}</p>
+                                  {bnb.host.verified && (
+                                    <span className="text-green-500 text-xs">✓</span>
+                                  )}
+                                </div>
+                                <p className="text-xs text-gray-600">
+                                  Responds in {bnb.host.responseTime}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex gap-2">
+                              <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                <Eye size={16} />
+                              </button>
+                              <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                <Share2 size={16} />
+                              </button>
+                              <button 
+                                onClick={() => handleBooking(bnb)}
+                                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                                  bnb.instantBook
+                                    ? 'bg-gradient-to-r from-secondary to-accent text-white hover:shadow-lg'
+                                    : 'bg-primary text-white hover:bg-primary/90'
+                                }`}
+                              >
+                                {bnb.instantBook ? 'Book Now' : 'Request'}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* No Results */}
+            {!loading && filteredBnbs.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center py-20"
+              >
+                <div className="w-24 h-24 mx-auto mb-6 bg-gray-200 rounded-full flex items-center justify-center">
+                  <Search className="w-12 h-12 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-600 mb-4">No stays found</h3>
+                <p className="text-gray-500 mb-6">
+                  Try adjusting your filters or search criteria.
+                </p>
+                <button
+                  onClick={clearAllFilters}
+                  className="bg-secondary text-white px-6 py-3 rounded-lg hover:bg-secondary/90 transition-colors"
+                >
+                  Clear All Filters
+                </button>
+              </motion.div>
+            )}
           </div>
 
           {/* Map */}
-          <div className="lg:sticky lg:top-8">
-            <div className="bg-white rounded-lg shadow-md p-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Map View</h3>
+          <div className={`${showFilters || window.innerWidth >= 1024 ? 'lg:col-span-1' : 'lg:col-span-1'}`}>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="bg-white rounded-xl shadow-lg p-4"
+            >
+              <h3 className="text-lg font-semibold text-primary mb-4">Map View</h3>
               <GoogleMaps
                 center={{ lat: -1.2921, lng: 36.8219 }}
                 zoom={11}
@@ -417,167 +657,27 @@ const BNBs = () => {
                 height="600px"
                 className="rounded-lg"
               />
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
 
-      {/* Booking Modal */}
-      {showBookingForm && selectedBnb && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h3 className="text-2xl font-semibold text-gray-900">{selectedBnb.title}</h3>
-                  <p className="text-gray-600">{selectedBnb.location}</p>
-                  <div className="flex items-center mt-2">
-                    <Star size={16} className="text-yellow-500 fill-current mr-1" />
-                    <span className="text-sm">{selectedBnb.rating} ({selectedBnb.reviews} reviews)</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowBookingForm(false)}
-                  className="text-gray-400 hover:text-gray-600 text-2xl"
-                >
-                  ×
-                </button>
-              </div>
-
-              <form onSubmit={handleBookingSubmit} className="space-y-6">
-                {/* Dates and Guests */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Check-in</label>
-                    <input
-                      type="date"
-                      value={bookingData.checkIn}
-                      onChange={(e) => setBookingData({...bookingData, checkIn: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Check-out</label>
-                    <input
-                      type="date"
-                      value={bookingData.checkOut}
-                      onChange={(e) => setBookingData({...bookingData, checkOut: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Guests</label>
-                    <select
-                      value={bookingData.guests}
-                      onChange={(e) => setBookingData({...bookingData, guests: parseInt(e.target.value)})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      required
-                    >
-                      {[...Array(selectedBnb.maxGuests)].map((_, i) => (
-                        <option key={i + 1} value={i + 1}>{i + 1} {i === 0 ? 'Guest' : 'Guests'}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Guest Information */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                    <input
-                      type="text"
-                      value={bookingData.name}
-                      onChange={(e) => setBookingData({...bookingData, name: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input
-                      type="email"
-                      value={bookingData.email}
-                      onChange={(e) => setBookingData({...bookingData, email: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                  <input
-                    type="tel"
-                    value={bookingData.phone}
-                    onChange={(e) => setBookingData({...bookingData, phone: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Special Requests (Optional)</label>
-                  <textarea
-                    value={bookingData.specialRequests}
-                    onChange={(e) => setBookingData({...bookingData, specialRequests: e.target.value})}
-                    rows="3"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-                    placeholder="Any special requests or requirements..."
-                  />
-                </div>
-
-                {/* Booking Summary */}
-                {bookingData.checkIn && bookingData.checkOut && (
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-gray-900 mb-2">Booking Summary</h4>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span>Rate per night:</span>
-                        <span>KES {selectedBnb.price.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Nights:</span>
-                        <span>{Math.ceil((new Date(bookingData.checkOut) - new Date(bookingData.checkIn)) / (1000 * 60 * 60 * 24))}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Guests:</span>
-                        <span>{bookingData.guests}</span>
-                      </div>
-                      <hr className="my-2" />
-                      <div className="flex justify-between font-semibold">
-                        <span>Total:</span>
-                        <span>KES {calculateTotalCost().toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowBookingForm(false)}
-                    className="flex-1 px-4 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors font-medium"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
-                      selectedBnb.instantBook
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : 'bg-orange-500 text-white hover:bg-orange-600'
-                    }`}
-                  >
-                    {selectedBnb.instantBook ? 'Confirm Booking' : 'Send Request'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Enhanced Booking Form */}
+      <BookingForm
+        isOpen={showBookingForm}
+        onClose={() => setShowBookingForm(false)}
+        bnb={selectedBnb}
+        onSubmit={(bookingData) => {
+          console.log('Booking submitted:', bookingData);
+          const checkInDate = new Date(bookingData.checkIn);
+          const checkOutDate = new Date(bookingData.checkOut);
+          const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
+          const totalCost = nights * selectedBnb.price;
+          
+          alert(`Booking request sent! Total: KES ${totalCost.toLocaleString()} for ${nights} nights`);
+          setShowBookingForm(false);
+        }}
+      />
     </div>
   );
 };

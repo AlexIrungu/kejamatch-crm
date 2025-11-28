@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   MapPin, 
   Bed, 
@@ -38,6 +38,7 @@ import GoogleMaps from '../components/common/GoogleMaps';
 
 const PropertyDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -132,6 +133,16 @@ const PropertyDetails = () => {
     // In a real app, this would save to user's favorites
   };
 
+  // Handle back navigation
+  const handleBackClick = () => {
+    // Use navigate with -1 to go back to previous page, or fallback to properties
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/properties');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -189,20 +200,20 @@ const PropertyDetails = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Back Button */}
+      {/* Back Button - Removed sticky positioning */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white border-b sticky top-0 z-40 shadow-sm"
+        className="bg-white border-b shadow-sm"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link 
-            to="/properties" 
+          <button 
+            onClick={handleBackClick}
             className="inline-flex items-center text-secondary hover:text-secondary/80 font-medium transition-colors"
           >
             <ArrowLeft size={20} className="mr-2" />
             Back to Properties
-          </Link>
+          </button>
         </div>
       </motion.div>
 
@@ -211,7 +222,7 @@ const PropertyDetails = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="relative h-96 md:h-[600px]"
+        className="relative h-96 md:h-[900px]"
       >
         <img 
           src={images[currentImageIndex]} 
@@ -453,14 +464,14 @@ const PropertyDetails = () => {
             </motion.div>
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar - Removed all sticky positioning */}
           <div className="space-y-6">
-            {/* Agent Card */}
+            {/* Agent Card - No sticky positioning */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="bg-white rounded-xl shadow-lg p-6 sticky top-6"
+              className="bg-white rounded-xl shadow-lg p-6"
             >
               <h3 className="text-xl font-bold text-primary mb-6">Contact Agent</h3>
               
