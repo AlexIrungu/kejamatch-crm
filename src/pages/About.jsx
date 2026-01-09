@@ -15,6 +15,10 @@ import {
   Phone,
   Mail
 } from 'lucide-react';
+import Brian from '../assets/Brian.jpeg'
+import gasper from '../assets/gasper.jpeg'
+import faith from '../assets/kucher.jpeg'
+// import maryanne from '../assets/maryanne.jpeg'
 
 const About = () => {
   const [openFAQ, setOpenFAQ] = useState(null);
@@ -55,28 +59,31 @@ const About = () => {
 
   const team = [
     {
-      name: 'Brian Kitainge',
-      position: 'CEO & Founder',
-      image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=300&h=300&fit=crop&crop=face',
-      bio: 'With over 15 years in real estate, Brian founded Kejamatch to revolutionize property transactions in Kenya.'
+      name: 'Gasper Barmao',
+      position: 'Director, Founder, CEO',
+      image: Brian,
+      bio: 'Gasper leads Kejamatch with strategic vision and expertise in transforming Kenya\'s real estate landscape.'
     },
     {
-      name: 'Gasper Barmao',
-      position: 'Head of Sales',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&crop=face',
-      bio: 'Gasper leads our sales team with expertise in luxury properties and commercial real estate.'
+      name: 'Brian Kitainge Kisilu',
+      position: 'Director, Co-Founder',
+      subtitle: 'Head of Data and Analytics',
+      image: gasper,
+      bio: 'Brian leverages data-driven insights to revolutionize property transactions and investment decisions.'
     },
     {
       name: 'Faith Kucher',
-      position: 'Property Manager',
-      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&h=300&fit=crop&crop=face',
-      bio: 'Faith ensures our clients receive exceptional property management services with attention to detail.'
+      position: 'Director, Co-Founder',
+      subtitle: 'Head of Sales and Client-Customer Outreach',
+      image: faith,
+      bio: 'Faith drives client success through exceptional sales strategies and personalized customer engagement.'
     },
     {
       name: 'Maryanne Mureithi',
-      position: 'Investment Advisor',
-      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=300&fit=crop&crop=face',
-      bio: 'Maryanne helps clients make informed investment decisions in the Kenyan real estate market.'
+      position: 'Director, Co-Founder',
+      subtitle: 'Head of Legal',
+      image: '',
+      bio: 'Maryanne ensures legal compliance and protects client interests in every transaction.'
     }
   ];
 
@@ -288,21 +295,7 @@ const About = () => {
                 <div className="absolute inset-0 bg-primary/20 rounded-2xl"></div>
               </div>
               
-              {/* Floating stats card */}
-              {/* <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-xl p-6 border"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                    <Award className="w-6 h-6 text-white" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-primary">10+</div>
-                    <div className="text-sm text-gray-600">Years of Excellence</div>
-                  </div>
-                </div>
-              </motion.div> */}
+             
             </motion.div>
           </div>
         </div>
@@ -356,9 +349,9 @@ const About = () => {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-primary mb-4">Meet Our Team</h2>
+            <h2 className="text-4xl md:text-5xl font-bold text-primary mb-4">Meet Our Leadership</h2>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Experienced professionals dedicated to helping you achieve your real estate goals
+              The visionary leaders driving innovation and excellence in Kenya's real estate sector
             </p>
           </motion.div>
 
@@ -370,17 +363,43 @@ const About = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                whileHover={{ scale: 1.05 }}
-                className="bg-gray-50 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 text-center"
+                className="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500"
               >
-                <img 
-                  src={member.image}
-                  alt={member.name}
-                  className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-4 border-white shadow-lg"
-                />
-                <h3 className="text-xl font-bold text-primary mb-2">{member.name}</h3>
-                <p className="text-secondary font-medium mb-3">{member.position}</p>
-                <p className="text-gray-600 text-sm">{member.bio}</p>
+                {/* Image Container */}
+                <div className="relative h-96 overflow-hidden">
+                  <img 
+                    src={member.image}
+                    alt={member.name}
+                    className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700"
+                  />
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/60 to-transparent opacity-90 group-hover:opacity-95 transition-opacity duration-500"></div>
+                  
+                  {/* Content Overlay */}
+                  <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      whileInView={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.2 + index * 0.1 }}
+                    >
+                      <h3 className="text-2xl font-bold mb-2 drop-shadow-lg">{member.name}</h3>
+                      <p className="text-accent font-semibold mb-1 text-sm uppercase tracking-wide drop-shadow">
+                        {member.position}
+                      </p>
+                      {member.subtitle && (
+                        <p className="text-white/90 text-sm mb-3 font-medium drop-shadow">
+                          {member.subtitle}
+                        </p>
+                      )}
+                      <p className="text-white/90 text-sm leading-relaxed group-hover:text-white transition-colors duration-300 drop-shadow">
+                        {member.bio}
+                      </p>
+                    </motion.div>
+                  </div>
+
+                  {/* Decorative Element */}
+                  <div className="absolute top-4 right-4 w-12 h-12 border-2 border-accent/50 rounded-full group-hover:scale-110 transition-transform duration-500"></div>
+                </div>
               </motion.div>
             ))}
           </div>
