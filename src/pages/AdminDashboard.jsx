@@ -14,9 +14,14 @@ import {
   ShieldX,
   List,
   Columns,
+  Plus,
+  Search,
+  Filter,
+  Calendar
 } from "lucide-react";
 import { useAuth } from "../components/auth/AuthContext";
 import adminService from "../services/adminService";
+import propertyService from "../services/propertyService";
 import StatsCard from "../components/admin/StatsCard";
 import LeadsList from "../components/admin/LeadsList";
 import LeadPipeline from "../components/admin/LeadPipeline";
@@ -25,8 +30,11 @@ import AssignModal from "../components/admin/AssignModal";
 import UserManagement from "../components/admin/UserManagement";
 import ProfileSettingsModal from "../components/admin/ProfileSettingsModal";
 import LeadDetailModal from "../components/leads/LeadDetailModal";
+import PropertyCardSimple from "../components/admin/PropertyCardSimple";
+import PropertyFormModal from "../components/admin/PropertyFormModal";
+import DeleteConfirmModal from "../components/admin/DeleteConfirmModal";
 import SEO from "../components/common/SEO";
-import propertyService from "../services/propertyService";
+import ViewingCalendar from '../components/admin/ViewingCalendar';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -47,8 +55,22 @@ const AdminDashboard = () => {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+
+  // Property state
   const [properties, setProperties] = useState([]);
   const [propertyLoading, setPropertyLoading] = useState(false);
+  const [showPropertyModal, setShowPropertyModal] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [propertyFormLoading, setPropertyFormLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [propertyToDelete, setPropertyToDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [propertySearchQuery, setPropertySearchQuery] = useState("");
+  const [propertyFilter, setPropertyFilter] = useState({
+    type: "",
+    status: "",
+    category: "",
+  });
 
   useEffect(() => {
     fetchDashboardData();
@@ -57,6 +79,13 @@ const AdminDashboard = () => {
   useEffect(() => {
     applyFilters();
   }, [filters, leads]);
+
+  // Fetch properties when tab changes to properties
+  useEffect(() => {
+    if (activeTab === "properties") {
+      fetchProperties();
+    }
+  }, [activeTab]);
 
   const fetchDashboardData = async () => {
     try {
@@ -82,16 +111,11 @@ const AdminDashboard = () => {
       setProperties(response.data || []);
     } catch (error) {
       console.error("Error fetching properties:", error);
+      alert("Failed to fetch properties. Please try again.");
     } finally {
       setPropertyLoading(false);
     }
   };
-
-  // Call in useEffect
-  useEffect(() => {
-    fetchDashboardData();
-    fetchProperties(); // ← ADD THIS
-  }, []);
 
   const applyFilters = () => {
     let filtered = [...leads];
@@ -130,14 +154,12 @@ const AdminDashboard = () => {
 
   const handleStatusChange = async (lead, newStatus = null) => {
     if (newStatus) {
-      // Called from pipeline drag-and-drop
       try {
         const response = await adminService.updateLeadStatus(
           lead.id || lead._id,
           newStatus,
         );
         if (response.success) {
-          // Update local state
           setLeads((prevLeads) =>
             prevLeads.map((l) =>
               l.id === lead.id || l._id === lead._id
@@ -151,7 +173,6 @@ const AdminDashboard = () => {
         alert("Failed to update lead status");
       }
     } else {
-      // Called from list view - open detail modal
       setSelectedLead(lead);
       setShowDetailModal(true);
     }
@@ -195,6 +216,157 @@ const AdminDashboard = () => {
   const handleBackToWebsite = () => {
     window.open("/", "_blank");
   };
+
+  // Property handlers
+  const handleAddProperty = () => {
+    setSelectedProperty(null);
+    setShowPropertyModal(true);
+  };
+
+  const handleEditProperty = (property) => {
+    setSelectedProperty(property);
+    setShowPropertyModal(true);
+  };
+
+  const handleViewProperty = (property) => {
+    window.open(`/properties/${property._id}`, "_blank");
+  };
+
+  const handleDeleteProperty = (property) => {
+    setPropertyToDelete(property);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteProperty = async () => {
+    if (!propertyToDelete) return;
+
+    try {
+      setDeleteLoading(true);
+      const response = await propertyService.deleteProperty(propertyToDelete._id);
+      
+      if (response.success) {
+        setProperties((prev) =>
+          prev.filter((p) => p._id !== propertyToDelete._id)
+        );
+        setShowDeleteModal(false);
+        setPropertyToDelete(null);
+      } else {
+        alert(response.message || "Failed to delete property");
+      }
+    } catch (error) {
+      console.error("Error deleting property:", error);
+      alert("Failed to delete property. Please try again.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handlePropertySubmit = async (propertyData) => {
+    try {
+      setPropertyFormLoading(true);
+      
+      let response;
+      if (selectedProperty) {
+        // Update existing property
+        response = await propertyService.updateProperty(
+          selectedProperty._id,
+          propertyData
+        );
+      } else {
+        // Create new property
+        response = await propertyService.createProperty(propertyData);
+      }
+
+      if (response.success) {
+        if (selectedProperty) {
+          // Update in list
+          setProperties((prev) =>
+            prev.map((p) =>
+              p._id === selectedProperty._id ? response.data : p
+            )
+          );
+        } else {
+          // Add to list
+          setProperties((prev) => [response.data, ...prev]);
+        }
+        setShowPropertyModal(false);
+        setSelectedProperty(null);
+      } else {
+        alert(response.message || "Failed to save property");
+      }
+    } catch (error) {
+      console.error("Error saving property:", error);
+      alert("Failed to save property. Please try again.");
+    } finally {
+      setPropertyFormLoading(false);
+    }
+  };
+
+  const handleToggleFeatured = async (property) => {
+    try {
+      const response = await propertyService.toggleFeatured(property._id);
+      if (response.success) {
+        setProperties((prev) =>
+          prev.map((p) =>
+            p._id === property._id ? { ...p, featured: !p.featured } : p
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error toggling featured:", error);
+      alert("Failed to update featured status");
+    }
+  };
+
+  const handleUpdatePropertyStatus = async (property, status) => {
+    try {
+      const response = await propertyService.updatePropertyStatus(
+        property._id,
+        status
+      );
+      if (response.success) {
+        setProperties((prev) =>
+          prev.map((p) =>
+            p._id === property._id ? { ...p, status } : p
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error updating property status:", error);
+      alert("Failed to update property status");
+    }
+  };
+
+  // Filter properties
+  const getFilteredProperties = () => {
+    let filtered = [...properties];
+
+    if (propertySearchQuery) {
+      const query = propertySearchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (p) =>
+          p.title?.toLowerCase().includes(query) ||
+          p.location?.city?.toLowerCase().includes(query) ||
+          p.location?.address?.toLowerCase().includes(query)
+      );
+    }
+
+    if (propertyFilter.type) {
+      filtered = filtered.filter((p) => p.type === propertyFilter.type);
+    }
+
+    if (propertyFilter.status) {
+      filtered = filtered.filter((p) => p.status === propertyFilter.status);
+    }
+
+    if (propertyFilter.category) {
+      filtered = filtered.filter((p) => p.category === propertyFilter.category);
+    }
+
+    return filtered;
+  };
+
+  const filteredProperties = getFilteredProperties();
 
   return (
     <>
@@ -244,7 +416,8 @@ const AdminDashboard = () => {
               {[
                 { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
                 { id: "leads", label: "Leads", icon: FileText },
-                { id: "properties", label: "Properties", icon: Home }, // ← ADD THIS
+                { id: "properties", label: "Properties", icon: Home },
+                { id: "viewings", label: "Viewings", icon: Calendar },
                 { id: "users", label: "Users", icon: Users },
               ].map((tab) => (
                 <button
@@ -456,36 +629,156 @@ const AdminDashboard = () => {
           {/* Users Tab */}
           {activeTab === "users" && <UserManagement />}
 
+          {activeTab === "viewings" && <ViewingCalendar />}
+
           {/* Properties Tab */}
           {activeTab === "properties" && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center">
+              {/* Header with Add Button */}
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h2 className="text-2xl font-bold text-gray-900">
                   Property Management
                 </h2>
                 <button
-                  onClick={() => {
-                    /* TODO: Open create property modal */
-                  }}
-                  className="flex items-center px-4 py-2 bg-secondary text-white rounded-lg hover:bg-opacity-90"
+                  onClick={handleAddProperty}
+                  className="flex items-center px-4 py-2 bg-secondary text-white rounded-lg hover:bg-opacity-90 transition-colors"
                 >
                   <Plus className="w-5 h-5 mr-2" />
                   Add Property
                 </button>
               </div>
 
+              {/* Search and Filters */}
+              <div className="bg-white rounded-lg shadow-md p-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  {/* Search */}
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search properties..."
+                      value={propertySearchQuery}
+                      onChange={(e) => setPropertySearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* Filters */}
+                  <div className="flex gap-2">
+                    <select
+                      value={propertyFilter.type}
+                      onChange={(e) =>
+                        setPropertyFilter((prev) => ({
+                          ...prev,
+                          type: e.target.value,
+                        }))
+                      }
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                    >
+                      <option value="">All Types</option>
+                      <option value="Rent">For Rent</option>
+                      <option value="Buy">For Sale</option>
+                    </select>
+
+                    <select
+                      value={propertyFilter.status}
+                      onChange={(e) =>
+                        setPropertyFilter((prev) => ({
+                          ...prev,
+                          status: e.target.value,
+                        }))
+                      }
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                    >
+                      <option value="">All Status</option>
+                      <option value="available">Available</option>
+                      <option value="unavailable">Unavailable</option>
+                      <option value="sold">Sold</option>
+                      <option value="rented">Rented</option>
+                    </select>
+
+                    <select
+                      value={propertyFilter.category}
+                      onChange={(e) =>
+                        setPropertyFilter((prev) => ({
+                          ...prev,
+                          category: e.target.value,
+                        }))
+                      }
+                      className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent"
+                    >
+                      <option value="">All Categories</option>
+                      <option value="apartments">Apartments</option>
+                      <option value="houses">Houses</option>
+                      <option value="land">Land</option>
+                      <option value="commercial">Commercial</option>
+                    </select>
+
+                    {(propertySearchQuery ||
+                      propertyFilter.type ||
+                      propertyFilter.status ||
+                      propertyFilter.category) && (
+                      <button
+                        onClick={() => {
+                          setPropertySearchQuery("");
+                          setPropertyFilter({ type: "", status: "", category: "" });
+                        }}
+                        className="px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Properties Grid */}
               {propertyLoading ? (
                 <div className="flex justify-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
                 </div>
+              ) : filteredProperties.length > 0 ? (
+                <>
+                  <p className="text-sm text-gray-600">
+                    Showing {filteredProperties.length} of {properties.length}{" "}
+                    properties
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredProperties.map((property) => (
+                      <PropertyCardSimple
+                        key={property._id}
+                        property={property}
+                        onEdit={() => handleEditProperty(property)}
+                        onView={() => handleViewProperty(property)}
+                        onDelete={() => handleDeleteProperty(property)}
+                        onToggleFeatured={() => handleToggleFeatured(property)}
+                        onStatusChange={(status) =>
+                          handleUpdatePropertyStatus(property, status)
+                        }
+                      />
+                    ))}
+                  </div>
+                </>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {properties.map((property) => (
-                    <PropertyCardSimple
-                      key={property._id}
-                      property={property}
-                    />
-                  ))}
+                <div className="bg-white rounded-lg shadow-md p-12 text-center">
+                  <Home className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                    No Properties Found
+                  </h3>
+                  <p className="text-gray-500 mb-6">
+                    {properties.length === 0
+                      ? "Get started by adding your first property listing."
+                      : "No properties match your current filters."}
+                  </p>
+                  {properties.length === 0 && (
+                    <button
+                      onClick={handleAddProperty}
+                      className="inline-flex items-center px-6 py-3 bg-secondary text-white rounded-lg hover:bg-opacity-90 transition-colors"
+                    >
+                      <Plus className="w-5 h-5 mr-2" />
+                      Add Your First Property
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -514,6 +807,28 @@ const AdminDashboard = () => {
         }}
         onUpdate={handleLeadUpdate}
         apiService={adminService}
+      />
+      <PropertyFormModal
+        isOpen={showPropertyModal}
+        onClose={() => {
+          setShowPropertyModal(false);
+          setSelectedProperty(null);
+        }}
+        onSubmit={handlePropertySubmit}
+        property={selectedProperty}
+        loading={propertyFormLoading}
+      />
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setPropertyToDelete(null);
+        }}
+        onConfirm={confirmDeleteProperty}
+        title="Delete Property"
+        message="Are you sure you want to delete this property? This action cannot be undone and will remove all associated data."
+        itemName={propertyToDelete?.title}
+        loading={deleteLoading}
       />
     </>
   );

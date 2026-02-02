@@ -1,33 +1,90 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { 
   MapPin, 
-  Bed, 
-  Bath, 
-  Square, 
   ChevronDown, 
-  Filter,
   Search,
-  X,
   Grid3X3,
   List,
   SlidersHorizontal,
   ArrowUpDown,
   Home,
   Building,
-  Car,
-  Calendar
 } from 'lucide-react';
 
-// Import components and data
+// Import components and services
 import PropertyCard from '../components/properties/PropertyCard';
-import { properties, formatPrice, searchProperties, kenyanLocations } from '../data/properties';
+import propertyService from '../services/propertyService';
+
+// Kenya locations data for search autocomplete
+const kenyanLocations = [
+  // Nairobi Areas
+  { name: 'Nairobi', coordinates: { lat: -1.2921, lng: 36.8219 } },
+  { name: 'Westlands', coordinates: { lat: -1.2676, lng: 36.8108 } },
+  { name: 'Karen', coordinates: { lat: -1.3197, lng: 36.6917 } },
+  { name: 'Kilimani', coordinates: { lat: -1.3032, lng: 36.7856 } },
+  { name: 'Kileleshwa', coordinates: { lat: -1.2696, lng: 36.7809 } },
+  { name: 'Lavington', coordinates: { lat: -1.2833, lng: 36.7667 } },
+  { name: 'Runda', coordinates: { lat: -1.2167, lng: 36.8167 } },
+  { name: 'Muthaiga', coordinates: { lat: -1.2500, lng: 36.8167 } },
+  { name: 'Parklands', coordinates: { lat: -1.2500, lng: 36.8500 } },
+  { name: 'South B', coordinates: { lat: -1.3167, lng: 36.8333 } },
+  { name: 'South C', coordinates: { lat: -1.3333, lng: 36.8333 } },
+  { name: 'Donholm', coordinates: { lat: -1.2833, lng: 36.9000 } },
+  { name: 'Kasarani', coordinates: { lat: -1.2167, lng: 36.9000 } },
+  { name: 'Thika Road', coordinates: { lat: -1.2000, lng: 36.8833 } },
+  { name: 'Ngong Road', coordinates: { lat: -1.3167, lng: 36.7667 } },
+  { name: 'Langata', coordinates: { lat: -1.3667, lng: 36.7667 } },
+  
+  // Mombasa Areas
+  { name: 'Mombasa', coordinates: { lat: -4.0435, lng: 39.6682 } },
+  { name: 'Nyali', coordinates: { lat: -4.0167, lng: 39.7000 } },
+  { name: 'Bamburi', coordinates: { lat: -3.9833, lng: 39.7167 } },
+  { name: 'Diani', coordinates: { lat: -4.3167, lng: 39.5833 } },
+  { name: 'Malindi', coordinates: { lat: -3.2167, lng: 40.1167 } },
+  
+  // Other Major Towns
+  { name: 'Kisumu', coordinates: { lat: -0.1022, lng: 34.7617 } },
+  { name: 'Nakuru', coordinates: { lat: -0.3031, lng: 36.0800 } },
+  { name: 'Eldoret', coordinates: { lat: 0.5143, lng: 35.2698 } },
+  { name: 'Kapsoya, Eldoret', coordinates: { lat: 0.5143, lng: 35.2698 } },
+  { name: 'Thika', coordinates: { lat: -1.0333, lng: 37.0833 } },
+  { name: 'Machakos', coordinates: { lat: -1.5167, lng: 37.2667 } },
+  { name: 'Meru', coordinates: { lat: 0.0500, lng: 37.6500 } },
+  { name: 'Embu', coordinates: { lat: -0.5333, lng: 37.4500 } },
+  { name: 'Kitale', coordinates: { lat: 1.0167, lng: 35.0000 } },
+  { name: 'Garissa', coordinates: { lat: -0.4536, lng: 39.6401 } },
+  { name: 'Kakamega', coordinates: { lat: 0.2833, lng: 34.7500 } },
+  { name: 'Kericho', coordinates: { lat: -0.3667, lng: 35.2833 } },
+  { name: 'Nyeri', coordinates: { lat: -0.4167, lng: 36.9500 } }
+];
+
+// Format price helper
+const formatPrice = (price, type) => {
+  if (type === 'Rent') {
+    if (price >= 1000000) {
+      return `KES ${(price / 1000000).toFixed(1)}M`.replace('.0M', 'M') + '/month';
+    } else if (price >= 1000) {
+      return `KES ${(price / 1000).toFixed(0)}K/month`;
+    }
+    return `KES ${price.toLocaleString()}/month`;
+  } else {
+    if (price >= 1000000) {
+      return `KES ${(price / 1000000).toFixed(1)}M`.replace('.0M', 'M');
+    } else if (price >= 1000) {
+      return `KES ${(price / 1000).toFixed(0)}K`;
+    }
+    return `KES ${price.toLocaleString()}`;
+  }
+};
 
 const Properties = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [filteredProperties, setFilteredProperties] = useState(properties);
-  const [loading, setLoading] = useState(false);
+  const [properties, setProperties] = useState([]);
+  const [filteredProperties, setFilteredProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   // Filter states
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
@@ -36,8 +93,8 @@ const Properties = () => {
   const [selectedCategories, setSelectedCategories] = useState({
     houses: false,
     apartments: false,
-    offices: false,
-    villas: false
+    land: false,
+    commercial: false
   });
   const [bedroomFilter, setBedroomFilter] = useState('');
   const [bathroomFilter, setBathroomFilter] = useState('');
@@ -45,22 +102,29 @@ const Properties = () => {
   
   // UI states
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [viewMode, setViewMode] = useState('grid');
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
   const [locationSuggestions, setLocationSuggestions] = useState([]);
 
-  // Initialize filters from URL params
+  // Fetch properties from API
   useEffect(() => {
-    const urlSearch = searchParams.get('search');
-    const urlType = searchParams.get('type');
-    const urlLocation = searchParams.get('location');
-    
-    if (urlSearch) setSearchQuery(urlSearch);
-    if (urlType) setSelectedType(urlType.charAt(0).toUpperCase() + urlType.slice(1));
-    
-    // Apply initial filters
-    applyFilters();
+    fetchProperties();
   }, []);
+
+  const fetchProperties = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await propertyService.searchProperties({});
+      setProperties(response.data || []);
+      setFilteredProperties(response.data || []);
+    } catch (err) {
+      console.error('Error fetching properties:', err);
+      setError('Failed to load properties. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Update location suggestions based on search
   useEffect(() => {
@@ -78,13 +142,17 @@ const Properties = () => {
 
   // Apply all filters
   const applyFilters = () => {
-    setLoading(true);
-    
     let filtered = [...properties];
 
-    // Search query filter
+    // Search query filter (title, location)
     if (searchQuery.trim()) {
-      filtered = searchProperties(searchQuery, selectedType);
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(property =>
+        property.title?.toLowerCase().includes(query) ||
+        property.location?.city?.toLowerCase().includes(query) ||
+        property.location?.address?.toLowerCase().includes(query) ||
+        property.location?.county?.toLowerCase().includes(query)
+      );
     }
 
     // Type filter
@@ -132,31 +200,29 @@ const Properties = () => {
     // Sort properties
     filtered = sortProperties(filtered, sortBy);
 
-    setTimeout(() => {
-      setFilteredProperties(filtered);
-      setLoading(false);
-    }, 300);
+    setFilteredProperties(filtered);
   };
 
   // Sort properties
   const sortProperties = (props, sortType) => {
+    const sorted = [...props];
     switch (sortType) {
       case 'price-low':
-        return props.sort((a, b) => a.price - b.price);
+        return sorted.sort((a, b) => a.price - b.price);
       case 'price-high':
-        return props.sort((a, b) => b.price - a.price);
+        return sorted.sort((a, b) => b.price - a.price);
       case 'beds':
-        return props.sort((a, b) => b.beds - a.beds);
+        return sorted.sort((a, b) => b.beds - a.beds);
       case 'newest':
       default:
-        return props.sort((a, b) => b.yearBuilt - a.yearBuilt);
+        return sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
   };
 
   // Apply filters when any filter changes
   useEffect(() => {
     applyFilters();
-  }, [selectedType, selectedCategories, priceRange, bedroomFilter, bathroomFilter, sortBy]);
+  }, [properties, selectedType, selectedCategories, priceRange, bedroomFilter, bathroomFilter, sortBy, searchQuery]);
 
   // Handle search
   const handleSearch = () => {
@@ -172,8 +238,8 @@ const Properties = () => {
     setSelectedCategories({
       houses: false,
       apartments: false,
-      offices: false,
-      villas: false
+      land: false,
+      commercial: false
     });
     setBedroomFilter('');
     setBathroomFilter('');
@@ -185,7 +251,6 @@ const Properties = () => {
   const handleLocationSelect = (location) => {
     setSearchQuery(location.name);
     setShowLocationSuggestions(false);
-    applyFilters();
   };
 
   // Get active filter count
@@ -201,9 +266,8 @@ const Properties = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section - Simplified without background hue */}
-      <section className="relative h-[900px] flex items-center justify-center overflow-hidden">
-        {/* Background Image with Simple Overlay */}
+      {/* Hero Section */}
+      <section className="relative h-[400px] md:h-[500px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-black/40 z-10"></div>
           <img 
@@ -213,7 +277,6 @@ const Properties = () => {
           />
         </div>
 
-        {/* Content */}
         <div className="container mx-auto px-4 relative z-30">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -231,7 +294,7 @@ const Properties = () => {
             <div className="bg-white/95 backdrop-blur-md rounded-xl p-4 shadow-2xl max-w-3xl mx-auto">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex gap-2">
-                  {['All', 'Buy', 'Rent', 'BNBs'].map((type) => (
+                  {['All', 'Buy', 'Rent'].map((type) => (
                     <button
                       key={type}
                       onClick={() => setSelectedType(type === 'All' ? '' : type)}
@@ -253,11 +316,11 @@ const Properties = () => {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => locationSuggestions.length > 0 && setShowLocationSuggestions(true)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                     className="w-full px-4 py-2 pr-12 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-secondary focus:bg-white"
                   />
                   <MapPin className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                   
-                  {/* Location Suggestions */}
                   {showLocationSuggestions && (
                     <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto">
                       {locationSuggestions.map((location, index) => (
@@ -298,7 +361,7 @@ const Properties = () => {
           >
             <div>
               <h2 className="text-2xl font-bold text-primary mb-2">
-                {filteredProperties.length} Properties Found
+                {loading ? 'Loading...' : `${filteredProperties.length} Properties Found`}
               </h2>
               <p className="text-gray-600">
                 {searchQuery && `Showing results for "${searchQuery}"`}
@@ -342,7 +405,7 @@ const Properties = () => {
                 onClick={() => setShowMobileFilters(!showMobileFilters)}
                 className="lg:hidden flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
               >
-                <Filter size={18} />
+                <SlidersHorizontal size={18} />
                 Filters
                 {getActiveFilterCount() > 0 && (
                   <span className="bg-accent text-primary px-2 py-1 rounded-full text-xs font-bold">
@@ -354,13 +417,12 @@ const Properties = () => {
           </motion.div>
 
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Filters Sidebar - Removed all sticky positioning */}
+            {/* Filters Sidebar */}
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               className={`lg:w-1/4 ${showMobileFilters ? 'block' : 'hidden lg:block'}`}
             >
-              {/* Removed all sticky positioning */}
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-bold text-primary flex items-center gap-2">
@@ -405,8 +467,8 @@ const Properties = () => {
                     {[
                       { key: 'apartments', label: 'Apartments', icon: Building },
                       { key: 'houses', label: 'Houses', icon: Home },
-                      { key: 'offices', label: 'Offices', icon: Building },
-                      { key: 'villas', label: 'Villas', icon: Home }
+                      { key: 'land', label: 'Land', icon: Home },
+                      { key: 'commercial', label: 'Commercial', icon: Building }
                     ].map(({ key, label, icon: Icon }) => (
                       <label key={key} className="flex items-center group cursor-pointer">
                         <input 
@@ -509,9 +571,10 @@ const Properties = () => {
 
             {/* Properties Grid/List */}
             <div className="lg:w-3/4">
-              <AnimatePresence>
+              <AnimatePresence mode="wait">
                 {loading ? (
                   <motion.div
+                    key="loading"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -522,8 +585,28 @@ const Properties = () => {
                       <p className="text-gray-600">Loading properties...</p>
                     </div>
                   </motion.div>
+                ) : error ? (
+                  <motion.div
+                    key="error"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center py-20"
+                  >
+                    <div className="w-24 h-24 mx-auto mb-6 bg-red-100 rounded-full flex items-center justify-center">
+                      <Home className="w-12 h-12 text-red-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-600 mb-4">Error Loading Properties</h3>
+                    <p className="text-gray-500 mb-6">{error}</p>
+                    <button
+                      onClick={fetchProperties}
+                      className="bg-secondary text-white px-6 py-3 rounded-lg hover:bg-secondary/90 transition-colors"
+                    >
+                      Try Again
+                    </button>
+                  </motion.div>
                 ) : filteredProperties.length > 0 ? (
                   <motion.div
+                    key="properties"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -535,10 +618,10 @@ const Properties = () => {
                   >
                     {filteredProperties.map((property, index) => (
                       <motion.div
-                        key={property.id}
+                        key={property._id || property.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
+                        transition={{ delay: index * 0.05 }}
                         className={viewMode === 'list' ? 'w-full' : ''}
                       >
                         <PropertyCard 
@@ -550,6 +633,7 @@ const Properties = () => {
                   </motion.div>
                 ) : (
                   <motion.div
+                    key="empty"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="text-center py-20"
@@ -559,14 +643,18 @@ const Properties = () => {
                     </div>
                     <h3 className="text-xl font-semibold text-gray-600 mb-4">No Properties Found</h3>
                     <p className="text-gray-500 mb-6">
-                      Try adjusting your filters or search criteria to find more properties.
+                      {properties.length === 0 
+                        ? "No properties are currently listed. Check back soon!"
+                        : "Try adjusting your filters or search criteria to find more properties."}
                     </p>
-                    <button
-                      onClick={clearAllFilters}
-                      className="bg-secondary text-white px-6 py-3 rounded-lg hover:bg-secondary/90 transition-colors"
-                    >
-                      Clear All Filters
-                    </button>
+                    {getActiveFilterCount() > 0 && (
+                      <button
+                        onClick={clearAllFilters}
+                        className="bg-secondary text-white px-6 py-3 rounded-lg hover:bg-secondary/90 transition-colors"
+                      >
+                        Clear All Filters
+                      </button>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
