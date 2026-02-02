@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 // Create axios instance
 const api = axios.create({
@@ -32,7 +32,12 @@ api.interceptors.response.use(
       // Token expired or invalid
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Only redirect if not on auth pages
+      if (!window.location.pathname.includes('/login') && 
+          !window.location.pathname.includes('/register') &&
+          !window.location.pathname.includes('/verify-email')) {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -67,13 +72,46 @@ const authService = {
     }
   },
 
+  // Verify email with code
+  async verifyEmail(email, code) {
+    try {
+      const response = await api.post('/api/auth/verify-email', { email, code });
+      if (response.data.success && response.data.data.user) {
+        // Update stored user with verified status
+        const currentUser = this.getUser();
+        if (currentUser && currentUser.email === email) {
+          currentUser.isVerified = true;
+          localStorage.setItem('user', JSON.stringify(currentUser));
+        }
+      }
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Verification failed' };
+    }
+  },
+
+  // Resend verification code
+  async resendVerificationCode(email) {
+    try {
+      const response = await api.post('/api/auth/resend-verification', { email });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to resend code' };
+    }
+  },
+
   // Logout user
   logout() {
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
   },
 
-  // Get current user
+  // Get token from local storage
+  getToken() {
+    return localStorage.getItem('authToken');
+  },
+
+  // Get current user from API
   async getCurrentUser() {
     try {
       const response = await api.get('/api/auth/me');
@@ -115,6 +153,12 @@ const authService = {
   getUser() {
     const userStr = localStorage.getItem('user');
     return userStr ? JSON.parse(userStr) : null;
+  },
+
+  // Check if user is verified
+  isVerified() {
+    const user = this.getUser();
+    return user?.isVerified === true;
   },
 
   // Check if user is admin

@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
-// Create axios instance with auth token
 const createAuthApi = () => {
   const token = localStorage.getItem('authToken');
   return axios.create({
@@ -15,7 +14,7 @@ const createAuthApi = () => {
 };
 
 const adminService = {
-  // Get dashboard statistics
+  // Dashboard
   async getDashboardStats() {
     try {
       const api = createAuthApi();
@@ -26,7 +25,7 @@ const adminService = {
     }
   },
 
-  // Get all leads with optional filters
+  // Leads CRUD
   async getAllLeads(filters = {}) {
     try {
       const api = createAuthApi();
@@ -37,7 +36,6 @@ const adminService = {
     }
   },
 
-  // Get single lead
   async getLead(id) {
     try {
       const api = createAuthApi();
@@ -48,18 +46,16 @@ const adminService = {
     }
   },
 
-  // Update lead status
-  async updateLeadStatus(id, status, notes = '') {
+  async updateLeadStatus(id, status) {
     try {
       const api = createAuthApi();
-      const response = await api.put(`/api/admin/leads/${id}/status`, { status, notes });
+      const response = await api.put(`/api/admin/leads/${id}/status`, { status });
       return response.data;
     } catch (error) {
       throw error.response?.data || { success: false, message: 'Failed to update lead status' };
     }
   },
 
-  // Assign lead to agent
   async assignLead(leadId, agentId) {
     try {
       const api = createAuthApi();
@@ -70,7 +66,6 @@ const adminService = {
     }
   },
 
-  // Delete lead
   async deleteLead(id) {
     try {
       const api = createAuthApi();
@@ -81,15 +76,85 @@ const adminService = {
     }
   },
 
-  // Export leads to CSV
+  // Lead Activities
+  async getLeadActivities(leadId) {
+    try {
+      const api = createAuthApi();
+      const response = await api.get(`/api/admin/leads/${leadId}/activities`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to get activities' };
+    }
+  },
+
+  async addNote(leadId, note) {
+    try {
+      const api = createAuthApi();
+      const response = await api.post(`/api/admin/leads/${leadId}/notes`, { note });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to add note' };
+    }
+  },
+
+  async logCall(leadId, callData) {
+    try {
+      const api = createAuthApi();
+      const response = await api.post(`/api/admin/leads/${leadId}/calls`, callData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to log call' };
+    }
+  },
+
+  async logEmail(leadId, emailData) {
+    try {
+      const api = createAuthApi();
+      const response = await api.post(`/api/admin/leads/${leadId}/emails`, emailData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to log email' };
+    }
+  },
+
+  // Viewings
+  async scheduleViewing(leadId, viewingData) {
+    try {
+      const api = createAuthApi();
+      const response = await api.post(`/api/admin/leads/${leadId}/viewings`, viewingData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to schedule viewing' };
+    }
+  },
+
+  async completeViewing(leadId, viewingId, outcome, notes) {
+    try {
+      const api = createAuthApi();
+      const response = await api.put(`/api/admin/leads/${leadId}/viewings/${viewingId}/complete`, { outcome, notes });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to complete viewing' };
+    }
+  },
+
+  // Property Interest
+  async addPropertyInterest(leadId, propertyData) {
+    try {
+      const api = createAuthApi();
+      const response = await api.post(`/api/admin/leads/${leadId}/property-interest`, propertyData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to add property interest' };
+    }
+  },
+
+  // Export
   async exportLeads() {
     try {
       const api = createAuthApi();
-      const response = await api.get('/api/admin/leads/export/csv', {
-        responseType: 'blob',
-      });
+      const response = await api.get('/api/admin/leads/export/csv', { responseType: 'blob' });
       
-      // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -104,7 +169,7 @@ const adminService = {
     }
   },
 
-  // Sync leads to Odoo
+  // Odoo Sync
   async syncToOdoo(leadId = null) {
     try {
       const api = createAuthApi();
@@ -115,7 +180,7 @@ const adminService = {
     }
   },
 
-  // User management
+  // Users
   async getAllUsers() {
     try {
       const api = createAuthApi();
@@ -143,6 +208,26 @@ const adminService = {
       return response.data;
     } catch (error) {
       throw error.response?.data || { success: false, message: 'Failed to delete user' };
+    }
+  },
+
+  async verifyUser(id) {
+    try {
+      const api = createAuthApi();
+      const response = await api.put(`/api/admin/users/${id}/verify`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to verify user' };
+    }
+  },
+
+  async getUnverifiedUsers() {
+    try {
+      const api = createAuthApi();
+      const response = await api.get('/api/admin/users/unverified');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to get unverified users' };
     }
   },
 };
