@@ -3,7 +3,7 @@
  * Handles all HTTP requests to backend API
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://kejamatch-backend.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://kejamatch-backend.onrender.com';
 
 /**
  * Generic fetch wrapper with error handling

@@ -21,7 +21,7 @@ const BookingForm = ({
   const [submitStatus, setSubmitStatus] = useState(null);
 
   // Backend API URL - Update this with your Render URL after deployment
-  const API_URL = import.meta.env.VITE_API_URL || 'https://kejamatch-backend.onrender.com';
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'https://kejamatch-backend.onrender.com';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -48,7 +48,7 @@ const BookingForm = ({
         propertyLocation: bnb.location,
         name: bookingData.name,
         email: bookingData.email,
-        phone: bookingData.phone,
+        phoneNumber: bookingData.phone,
         checkIn: bookingData.checkIn,
         checkOut: bookingData.checkOut,
         guests: bookingData.guests,
