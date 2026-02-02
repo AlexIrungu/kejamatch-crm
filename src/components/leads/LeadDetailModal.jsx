@@ -3,6 +3,7 @@ import {
   X, Mail, Phone, Calendar, MapPin, User, Clock, MessageSquare,
   PhoneCall, Send, Eye, Home, FileText, Plus, CheckCircle, ArrowRight
 } from 'lucide-react';
+import propertyService from '../../services/propertyService'; // ✅ Add this import
 
 const LeadDetailModal = ({ lead, isOpen, onClose, onUpdate, isAgent = false, apiService }) => {
   const [activeTab, setActiveTab] = useState('timeline');
@@ -18,23 +19,29 @@ const LeadDetailModal = ({ lead, isOpen, onClose, onUpdate, isAgent = false, api
   // Form states
   const [noteText, setNoteText] = useState('');
   const [callData, setCallData] = useState({ outcome: '', duration: '', notes: '' });
-  const [viewingData, setViewingData] = useState({ propertyName: '', scheduledDate: '', scheduledTime: '', notes: '' });
+  const [viewingData, setViewingData] = useState({ 
+    propertyId: '',      // ✅ Add propertyId
+    propertyName: '', 
+    scheduledDate: '', 
+    scheduledTime: '', 
+    notes: '' 
+  });
   
   // Fetch properties when modal opens
-useEffect(() => {
-  if (isOpen) {
-    fetchAvailableProperties();
-  }
-}, [isOpen]);
+  useEffect(() => {
+    if (isOpen) {
+      fetchAvailableProperties();
+    }
+  }, [isOpen]);
 
-const fetchAvailableProperties = async () => {
-  try {
-    const response = await propertyService.getAllProperties({ status: 'available' });
-    setAvailableProperties(response.data || []);
-  } catch (error) {
-    console.error('Error fetching properties:', error);
-  }
-};
+  const fetchAvailableProperties = async () => {
+    try {
+      const response = await propertyService.getAllProperties({ status: 'available' });
+      setAvailableProperties(response.data || []);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+    }
+  };
   
   useEffect(() => {
     if (lead && isOpen) {
@@ -112,6 +119,7 @@ const fetchAvailableProperties = async () => {
       }
     } catch (error) {
       console.error('Error adding note:', error);
+      alert('Failed to add note: ' + (error.message || 'Unknown error'));
     }
     setLoading(false);
   };
@@ -129,23 +137,29 @@ const fetchAvailableProperties = async () => {
       }
     } catch (error) {
       console.error('Error logging call:', error);
+      alert('Failed to log call: ' + (error.message || 'Unknown error'));
     }
     setLoading(false);
   };
 
   const handleScheduleViewing = async () => {
-    if (!viewingData.scheduledDate || !viewingData.scheduledTime || !apiService) return;
+    if (!viewingData.propertyId || !viewingData.scheduledDate || !viewingData.scheduledTime || !apiService) {
+      alert('Please select a property, date, and time');
+      return;
+    }
     setLoading(true);
     try {
       const response = await apiService.scheduleViewing(lead.id, viewingData);
       if (response.success) {
         setActivities(response.data.activities || []);
-        setViewingData({ propertyName: '', scheduledDate: '', scheduledTime: '', notes: '' });
+        setViewingData({ propertyId: '', propertyName: '', scheduledDate: '', scheduledTime: '', notes: '' });
         setShowViewingModal(false);
         if (onUpdate) onUpdate(response.data);
+        alert('Viewing scheduled successfully!');
       }
     } catch (error) {
       console.error('Error scheduling viewing:', error);
+      alert('Failed to schedule viewing: ' + (error.message || 'Unknown error'));
     }
     setLoading(false);
   };
@@ -461,24 +475,24 @@ const fetchAvailableProperties = async () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Property *</label>
                 <select
-    value={viewingData.propertyId}
-    onChange={(e) => {
-      const property = availableProperties.find(p => p._id === e.target.value);
-      setViewingData({
-        ...viewingData,
-        propertyId: e.target.value,
-        propertyName: property ? property.title : ''
-      });
-    }}
-    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-secondary"
-  >
-    <option value="">Select a property</option>
-    {availableProperties.map((property) => (
-      <option key={property._id} value={property._id}>
-        {property.title} - {property.location.city}
-      </option>
-    ))}
-  </select>
+                  value={viewingData.propertyId}
+                  onChange={(e) => {
+                    const property = availableProperties.find(p => p._id === e.target.value);
+                    setViewingData({
+                      ...viewingData,
+                      propertyId: e.target.value,
+                      propertyName: property ? property.title : ''
+                    });
+                  }}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-secondary"
+                >
+                  <option value="">Select a property</option>
+                  {availableProperties.map((property) => (
+                    <option key={property._id} value={property._id}>
+                      {property.title} - {property.location?.city || ''}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -514,14 +528,17 @@ const fetchAvailableProperties = async () => {
             </div>
             <div className="flex justify-end gap-3 mt-4">
               <button
-                onClick={() => { setShowViewingModal(false); setViewingData({ propertyName: '', scheduledDate: '', scheduledTime: '', notes: '' }); }}
+                onClick={() => { 
+                  setShowViewingModal(false); 
+                  setViewingData({ propertyId: '', propertyName: '', scheduledDate: '', scheduledTime: '', notes: '' }); 
+                }}
                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
               >
                 Cancel
               </button>
               <button
                 onClick={handleScheduleViewing}
-                disabled={!viewingData.scheduledDate || !viewingData.scheduledTime || loading}
+                disabled={!viewingData.propertyId || !viewingData.scheduledDate || !viewingData.scheduledTime || loading}
                 className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50"
               >
                 {loading ? 'Scheduling...' : 'Schedule Viewing'}
