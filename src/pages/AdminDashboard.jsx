@@ -17,7 +17,8 @@ import {
   Plus,
   Search,
   Filter,
-  Calendar
+  Calendar,
+  BarChart
 } from "lucide-react";
 import { useAuth } from "../components/auth/AuthContext";
 import adminService from "../services/adminService";
@@ -35,6 +36,7 @@ import PropertyFormModal from "../components/admin/PropertyFormModal";
 import DeleteConfirmModal from "../components/admin/DeleteConfirmModal";
 import SEO from "../components/common/SEO";
 import ViewingCalendar from '../components/admin/ViewingCalendar';
+import AnalyticsDashboard from '../components/admin/analytics/AnalyticsDashboard';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -418,6 +420,7 @@ const AdminDashboard = () => {
                 { id: "leads", label: "Leads", icon: FileText },
                 { id: "properties", label: "Properties", icon: Home },
                 { id: "viewings", label: "Viewings", icon: Calendar },
+                { id: "analytics", label: "Analytics", icon: BarChart },
                 { id: "users", label: "Users", icon: Users },
               ].map((tab) => (
                 <button
@@ -630,6 +633,9 @@ const AdminDashboard = () => {
           {activeTab === "users" && <UserManagement />}
 
           {activeTab === "viewings" && <ViewingCalendar />}
+
+          {/* Analytics Tab */}
+          {activeTab === "analytics" && <AnalyticsDashboard />}
 
           {/* Properties Tab */}
           {activeTab === "properties" && (
