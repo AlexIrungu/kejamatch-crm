@@ -43,10 +43,11 @@ const Navbar = () => {
   };
 
   const getDashboardLink = () => {
-    if (user?.role === 'admin') return '/admin/dashboard';
-    if (user?.role === 'agent') return '/agent/dashboard';
-    return '/';
-  };
+  if (user?.role === 'admin') return '/admin/dashboard';
+  if (user?.role === 'agent') return '/agent/dashboard';
+  if (user?.role === 'client') return '/client/portal';  // ADD THIS
+  return '/';
+};
 
   return (
     <>

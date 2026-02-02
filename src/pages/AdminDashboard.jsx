@@ -18,7 +18,8 @@ import {
   Search,
   Filter,
   Calendar,
-  BarChart
+  BarChart,
+  FileCheck
 } from "lucide-react";
 import { useAuth } from "../components/auth/AuthContext";
 import adminService from "../services/adminService";
@@ -35,8 +36,11 @@ import PropertyCardSimple from "../components/admin/PropertyCardSimple";
 import PropertyFormModal from "../components/admin/PropertyFormModal";
 import DeleteConfirmModal from "../components/admin/DeleteConfirmModal";
 import SEO from "../components/common/SEO";
-import ViewingCalendar from '../components/admin/ViewingCalendar';
-import AnalyticsDashboard from '../components/admin/analytics/AnalyticsDashboard';
+import ViewingCalendar from "../components/admin/ViewingCalendar";
+import AnalyticsDashboard from "../components/admin/analytics/AnalyticsDashboard";
+import ClientApproval from "../components/admin/ClientApproval";
+import ClientManagement from "../components/admin/ClientManagement";
+import DocumentVerification from "../components/admin/DocumentVerification";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -244,11 +248,13 @@ const AdminDashboard = () => {
 
     try {
       setDeleteLoading(true);
-      const response = await propertyService.deleteProperty(propertyToDelete._id);
-      
+      const response = await propertyService.deleteProperty(
+        propertyToDelete._id,
+      );
+
       if (response.success) {
         setProperties((prev) =>
-          prev.filter((p) => p._id !== propertyToDelete._id)
+          prev.filter((p) => p._id !== propertyToDelete._id),
         );
         setShowDeleteModal(false);
         setPropertyToDelete(null);
@@ -266,13 +272,13 @@ const AdminDashboard = () => {
   const handlePropertySubmit = async (propertyData) => {
     try {
       setPropertyFormLoading(true);
-      
+
       let response;
       if (selectedProperty) {
         // Update existing property
         response = await propertyService.updateProperty(
           selectedProperty._id,
-          propertyData
+          propertyData,
         );
       } else {
         // Create new property
@@ -284,8 +290,8 @@ const AdminDashboard = () => {
           // Update in list
           setProperties((prev) =>
             prev.map((p) =>
-              p._id === selectedProperty._id ? response.data : p
-            )
+              p._id === selectedProperty._id ? response.data : p,
+            ),
           );
         } else {
           // Add to list
@@ -310,8 +316,8 @@ const AdminDashboard = () => {
       if (response.success) {
         setProperties((prev) =>
           prev.map((p) =>
-            p._id === property._id ? { ...p, featured: !p.featured } : p
-          )
+            p._id === property._id ? { ...p, featured: !p.featured } : p,
+          ),
         );
       }
     } catch (error) {
@@ -324,13 +330,11 @@ const AdminDashboard = () => {
     try {
       const response = await propertyService.updatePropertyStatus(
         property._id,
-        status
+        status,
       );
       if (response.success) {
         setProperties((prev) =>
-          prev.map((p) =>
-            p._id === property._id ? { ...p, status } : p
-          )
+          prev.map((p) => (p._id === property._id ? { ...p, status } : p)),
         );
       }
     } catch (error) {
@@ -349,7 +353,7 @@ const AdminDashboard = () => {
         (p) =>
           p.title?.toLowerCase().includes(query) ||
           p.location?.city?.toLowerCase().includes(query) ||
-          p.location?.address?.toLowerCase().includes(query)
+          p.location?.address?.toLowerCase().includes(query),
       );
     }
 
@@ -420,6 +424,8 @@ const AdminDashboard = () => {
                 { id: "leads", label: "Leads", icon: FileText },
                 { id: "properties", label: "Properties", icon: Home },
                 { id: "viewings", label: "Viewings", icon: Calendar },
+                { id: "clients", label: "Clients", icon: Users },
+                { id: "documents", label: "Documents", icon: FileCheck },
                 { id: "analytics", label: "Analytics", icon: BarChart },
                 { id: "users", label: "Users", icon: Users },
               ].map((tab) => (
@@ -634,6 +640,15 @@ const AdminDashboard = () => {
 
           {activeTab === "viewings" && <ViewingCalendar />}
 
+          {activeTab === "clients" && (
+            <div className="space-y-6">
+              <ClientApproval />
+              <ClientManagement />
+            </div>
+          )}
+
+          {activeTab === "documents" && <DocumentVerification />}
+
           {/* Analytics Tab */}
           {activeTab === "analytics" && <AnalyticsDashboard />}
 
@@ -727,7 +742,11 @@ const AdminDashboard = () => {
                       <button
                         onClick={() => {
                           setPropertySearchQuery("");
-                          setPropertyFilter({ type: "", status: "", category: "" });
+                          setPropertyFilter({
+                            type: "",
+                            status: "",
+                            category: "",
+                          });
                         }}
                         className="px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
                       >

@@ -20,14 +20,15 @@ const RoleGuard = ({ children, allowedRoles }) => {
   }
 
   if (!allowedRoles.includes(user.role)) {
-    // Redirect based on user role
-    if (user.role === 'admin') {
-      return <Navigate to="/admin/dashboard" replace />;
-    } else if (user.role === 'agent') {
-      return <Navigate to="/agent/dashboard" replace />;
-    }
-    return <Navigate to="/" replace />;
+  if (user.role === 'admin') {
+    return <Navigate to="/admin/dashboard" replace />;
+  } else if (user.role === 'agent') {
+    return <Navigate to="/agent/dashboard" replace />;
+  } else if (user.role === 'client') {
+    return <Navigate to="/client/portal" replace />;  // ADD THIS
   }
+  return <Navigate to="/" replace />;
+}
 
   return children;
 };
