@@ -8,6 +8,7 @@ const LeadDetailModal = ({ lead, isOpen, onClose, onUpdate, isAgent = false, api
   const [activeTab, setActiveTab] = useState('timeline');
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [availableProperties, setAvailableProperties] = useState([]);
   
   // Action modals
   const [showNoteModal, setShowNoteModal] = useState(false);
@@ -18,7 +19,23 @@ const LeadDetailModal = ({ lead, isOpen, onClose, onUpdate, isAgent = false, api
   const [noteText, setNoteText] = useState('');
   const [callData, setCallData] = useState({ outcome: '', duration: '', notes: '' });
   const [viewingData, setViewingData] = useState({ propertyName: '', scheduledDate: '', scheduledTime: '', notes: '' });
+  
+  // Fetch properties when modal opens
+useEffect(() => {
+  if (isOpen) {
+    fetchAvailableProperties();
+  }
+}, [isOpen]);
 
+const fetchAvailableProperties = async () => {
+  try {
+    const response = await propertyService.getAllProperties({ status: 'available' });
+    setAvailableProperties(response.data || []);
+  } catch (error) {
+    console.error('Error fetching properties:', error);
+  }
+};
+  
   useEffect(() => {
     if (lead && isOpen) {
       setActivities(lead.activities || []);
@@ -442,14 +459,26 @@ const LeadDetailModal = ({ lead, isOpen, onClose, onUpdate, isAgent = false, api
             <h3 className="text-lg font-semibold mb-4">Schedule Viewing</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Property Name</label>
-                <input
-                  type="text"
-                  value={viewingData.propertyName}
-                  onChange={(e) => setViewingData({ ...viewingData, propertyName: e.target.value })}
-                  placeholder="e.g., 2BR Apartment in Westlands"
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-secondary"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">Property *</label>
+                <select
+    value={viewingData.propertyId}
+    onChange={(e) => {
+      const property = availableProperties.find(p => p._id === e.target.value);
+      setViewingData({
+        ...viewingData,
+        propertyId: e.target.value,
+        propertyName: property ? property.title : ''
+      });
+    }}
+    className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-secondary"
+  >
+    <option value="">Select a property</option>
+    {availableProperties.map((property) => (
+      <option key={property._id} value={property._id}>
+        {property.title} - {property.location.city}
+      </option>
+    ))}
+  </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>

@@ -12,9 +12,13 @@ const StatusBadge = ({ status }) => {
       label: 'Qualified',
       className: 'bg-indigo-100 text-indigo-800',
     },
-    negotiation: {
-      label: 'Negotiation',
+    viewing: {
+      label: 'Viewing',
       className: 'bg-yellow-100 text-yellow-800',
+    },
+    negotiating: {
+      label: 'Negotiating',
+      className: 'bg-orange-100 text-orange-800',
     },
     won: {
       label: 'Won',
