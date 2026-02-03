@@ -59,6 +59,13 @@ const Navbar = () => {
     { path: '/contact', label: 'Contact' },
   ];
 
+  // Pages that need a solid navbar background (no dark hero section)
+  const solidNavbarPages = ['/properties', '/bnbs', '/client', '/agent', '/admin'];
+  const needsSolidNavbar = solidNavbarPages.some(page => location.pathname.startsWith(page));
+
+  // Use solid styling if scrolled OR if on a page that needs it
+  const useSolidStyle = isScrolled || needsSolidNavbar;
+
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -74,8 +81,8 @@ const Navbar = () => {
   return (
     <>
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-out ${
-        isScrolled 
-          ? 'bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-sm' 
+        useSolidStyle
+          ? 'bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-sm'
           : 'bg-transparent'
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -88,9 +95,9 @@ const Navbar = () => {
                 
                 {/* Logo container */}
                 <div className="relative px-3 py-2">
-                  <img 
-                    src={isScrolled ? logoClear : logoBlack} 
-                    alt="Kejamatch Logo" 
+                  <img
+                    src={useSolidStyle ? logoClear : logoBlack}
+                    alt="Kejamatch Logo"
                     className="h-24 w-auto object-contain transition-all duration-300 group-hover:scale-105"
                   />
                 </div>
@@ -111,7 +118,7 @@ const Navbar = () => {
                     className={`relative px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
                       isActive
                         ? 'text-primary bg-primary/8 shadow-sm'
-                        : isScrolled
+                        : useSolidStyle
                           ? 'text-gray-700 hover:text-primary hover:bg-gray-50'
                           : 'text-white/90 hover:text-white hover:bg-white/10'
                     }`}
@@ -134,10 +141,10 @@ const Navbar = () => {
                 {isAuthenticated ? (
                   <div className="flex items-center gap-3">
                     {/* Dashboard Link */}
-                    <Link 
+                    <Link
                       to={getDashboardLink()}
                       className={`inline-flex items-center px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
-                        isScrolled
+                        useSolidStyle
                           ? 'text-gray-700 hover:text-primary hover:bg-gray-50'
                           : 'text-white/90 hover:text-white hover:bg-white/10'
                       }`}
@@ -151,7 +158,7 @@ const Navbar = () => {
                       <button
                         onClick={() => setShowUserMenu(!showUserMenu)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
-                          isScrolled
+                          useSolidStyle
                             ? 'text-gray-700 hover:bg-gray-50'
                             : 'text-white/90 hover:bg-white/10'
                         }`}
@@ -207,7 +214,7 @@ const Navbar = () => {
                       <button
                         onClick={() => { setShowLoginMenu(!showLoginMenu); setShowRegisterMenu(false); }}
                         className={`inline-flex items-center px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
-                          isScrolled
+                          useSolidStyle
                             ? 'text-gray-700 hover:text-primary hover:bg-gray-50'
                             : 'text-white/90 hover:text-white hover:bg-white/10'
                         }`}
@@ -286,8 +293,8 @@ const Navbar = () => {
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className={`lg:hidden relative p-2 rounded-xl transition-all duration-200 ${
-                isScrolled
-                  ? 'text-gray-700 hover:bg-gray-100' 
+                useSolidStyle
+                  ? 'text-gray-700 hover:bg-gray-100'
                   : 'text-white hover:bg-white/10'
               }`}
             >

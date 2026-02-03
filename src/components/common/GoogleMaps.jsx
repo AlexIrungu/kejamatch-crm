@@ -1,47 +1,73 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { MapPin, Navigation, ZoomIn, ZoomOut } from 'lucide-react';
+// src/components/common/GoogleMaps.jsx
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { MapPin, Navigation, ZoomIn, ZoomOut, Maximize2, Minimize2 } from 'lucide-react';
+import loadGoogleMapsAPI from '../../utils/googleMapsLoader';
 
-const GoogleMaps = ({ 
-  center = { lat: -1.286389, lng: 36.817223 }, // Default to Nairobi
+const GoogleMaps = ({
+  center = { lat: -1.286389, lng: 36.817223 },
   zoom = 13,
   markers = [],
   height = "400px",
   className = "",
   showControls = true,
   onMapClick = null,
-  style = "roadmap" // roadmap, satellite, hybrid, terrain
+  onMarkerClick = null,
+  selectedMarkerId = null,
+  fitBounds = false,
+  style = "roadmap"
 }) => {
   const mapRef = useRef(null);
-  const [map, setMap] = useState(null);
+  const mapInstanceRef = useRef(null);
+  const markersRef = useRef([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState(null);
-  const markersRef = useRef([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Initialize Google Maps
+  // Custom map styles - clean, modern look
+  const mapStyles = [
+    {
+      featureType: "poi",
+      elementType: "labels",
+      stylers: [{ visibility: "off" }]
+    },
+    {
+      featureType: "transit",
+      elementType: "labels",
+      stylers: [{ visibility: "off" }]
+    },
+    {
+      featureType: "water",
+      elementType: "geometry",
+      stylers: [{ color: "#e9e9e9" }]
+    },
+    {
+      featureType: "water",
+      elementType: "labels.text.fill",
+      stylers: [{ color: "#9e9e9e" }]
+    }
+  ];
+
+  // Initialize map
   useEffect(() => {
-    const initializeMap = () => {
-      if (!window.google) {
-        setError("Google Maps API not loaded");
-        return;
-      }
+    let isMounted = true;
 
+    const initMap = async () => {
       try {
+        await loadGoogleMapsAPI();
+
+        if (!isMounted || !mapRef.current) return;
+
         const mapInstance = new window.google.maps.Map(mapRef.current, {
           center,
           zoom,
           mapTypeId: style,
-          disableDefaultUI: !showControls,
-          zoomControl: showControls,
-          mapTypeControl: showControls,
-          streetViewControl: showControls,
-          fullscreenControl: showControls,
-          styles: [
-            {
-              featureType: "poi",
-              elementType: "labels",
-              stylers: [{ visibility: "off" }]
-            }
-          ]
+          disableDefaultUI: true,
+          zoomControl: false,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+          styles: mapStyles,
+          gestureHandling: 'greedy'
         });
 
         if (onMapClick) {
@@ -53,38 +79,32 @@ const GoogleMaps = ({
           });
         }
 
-        setMap(mapInstance);
+        mapInstanceRef.current = mapInstance;
         setIsLoaded(true);
       } catch (err) {
-        setError("Failed to initialize map");
-        console.error("Map initialization error:", err);
+        if (isMounted) {
+          setError(err.message || 'Failed to load map');
+        }
       }
     };
 
-    // Load Google Maps API if not already loaded
-    if (!window.google) {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyCLimABKx5zogyMamZo-t1w8X4wlsM2m_8&libraries=places`;
-      script.async = true;
-      script.onload = initializeMap;
-      script.onerror = () => setError("Failed to load Google Maps API");
-      document.head.appendChild(script);
-    } else {
-      initializeMap();
-    }
+    initMap();
 
     return () => {
-      // Cleanup markers
-      markersRef.current.forEach(marker => {
-        if (marker.setMap) marker.setMap(null);
-      });
-      markersRef.current = [];
+      isMounted = false;
     };
-  }, [center.lat, center.lng, zoom, style, showControls]);
+  }, []);
 
-  // Update markers when markers prop changes
+  // Update center when prop changes
   useEffect(() => {
-    if (!map || !isLoaded) return;
+    if (mapInstanceRef.current && isLoaded) {
+      mapInstanceRef.current.setCenter(center);
+    }
+  }, [center.lat, center.lng, isLoaded]);
+
+  // Update markers
+  useEffect(() => {
+    if (!mapInstanceRef.current || !isLoaded) return;
 
     // Clear existing markers
     markersRef.current.forEach(marker => {
@@ -92,152 +112,204 @@ const GoogleMaps = ({
     });
     markersRef.current = [];
 
-    // Add new markers
-    markers.forEach((markerData, index) => {
-      try {
-        const marker = new window.google.maps.Marker({
-          position: { lat: markerData.lat, lng: markerData.lng },
-          map: map,
-          title: markerData.title || `Marker ${index + 1}`,
-          icon: markerData.icon || {
-            url: 'data:image/svg+xml;base64,' + btoa(`
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#DC2626"/>
-                <circle cx="12" cy="9" r="2.5" fill="white"/>
-              </svg>
-            `),
-            scaledSize: new window.google.maps.Size(24, 24)
+    if (markers.length === 0) return;
+
+    const bounds = new window.google.maps.LatLngBounds();
+
+    markers.forEach((markerData) => {
+      const isSelected = selectedMarkerId && markerData.id === selectedMarkerId;
+
+      // Create custom marker icon - use encodeURIComponent for Unicode support
+      const svgIcon = `
+        <svg width="36" height="48" viewBox="0 0 36 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 0C8.06 0 0 8.06 0 18c0 13.5 18 30 18 30s18-16.5 18-30c0-9.94-8.06-18-18-18z" fill="${isSelected ? '#ff6b35' : '#1e3a5f'}"/>
+          <circle cx="18" cy="18" r="8" fill="white"/>
+          <circle cx="18" cy="18" r="3" fill="${isSelected ? '#ff6b35' : '#1e3a5f'}"/>
+        </svg>
+      `;
+      const markerIcon = {
+        url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svgIcon)}`,
+        scaledSize: new window.google.maps.Size(36, 48),
+        anchor: new window.google.maps.Point(18, 48)
+      };
+
+      const marker = new window.google.maps.Marker({
+        position: { lat: markerData.lat, lng: markerData.lng },
+        map: mapInstanceRef.current,
+        title: markerData.title || '',
+        icon: markerIcon,
+        animation: isSelected ? window.google.maps.Animation.BOUNCE : null,
+        zIndex: isSelected ? 1000 : 1
+      });
+
+      // Stop bouncing after 2 bounces
+      if (isSelected) {
+        setTimeout(() => marker.setAnimation(null), 1400);
+      }
+
+      bounds.extend(marker.getPosition());
+
+      // Info window
+      if (markerData.infoWindow || markerData.title) {
+        const infoContent = markerData.infoWindow || `
+          <div style="padding: 8px; max-width: 200px;">
+            <h4 style="margin: 0 0 4px; font-weight: 600; color: #1e3a5f;">${markerData.title}</h4>
+            ${markerData.price ? `<p style="margin: 0; color: #ff6b35; font-weight: 600;">KES ${markerData.price.toLocaleString()}</p>` : ''}
+          </div>
+        `;
+
+        const infoWindow = new window.google.maps.InfoWindow({
+          content: infoContent
+        });
+
+        marker.addListener('click', () => {
+          // Close all other info windows
+          markersRef.current.forEach(m => {
+            if (m.infoWindow) m.infoWindow.close();
+          });
+
+          infoWindow.open(mapInstanceRef.current, marker);
+
+          if (onMarkerClick) {
+            onMarkerClick(markerData);
           }
         });
 
-        // Add info window if content is provided
-        if (markerData.infoWindow) {
-          const infoWindow = new window.google.maps.InfoWindow({
-            content: markerData.infoWindow
-          });
+        marker.infoWindow = infoWindow;
 
-          marker.addListener('click', () => {
-            // Close all other info windows
-            markersRef.current.forEach(m => {
-              if (m.infoWindow && m.infoWindow !== infoWindow) {
-                m.infoWindow.close();
-              }
-            });
-            infoWindow.open(map, marker);
-          });
-
-          marker.infoWindow = infoWindow;
+        // Auto-open selected marker info
+        if (isSelected) {
+          infoWindow.open(mapInstanceRef.current, marker);
         }
-
-        // Add click handler if provided
-        if (markerData.onClick) {
-          marker.addListener('click', () => markerData.onClick(markerData));
-        }
-
-        markersRef.current.push(marker);
-      } catch (err) {
-        console.error("Error creating marker:", err);
       }
+
+      markersRef.current.push(marker);
     });
-  }, [map, markers, isLoaded]);
 
-  const handleZoomIn = () => {
-    if (map) map.setZoom(map.getZoom() + 1);
-  };
-
-  const handleZoomOut = () => {
-    if (map) map.setZoom(map.getZoom() - 1);
-  };
-
-  const handleRecenter = () => {
-    if (map) {
-      map.setCenter(center);
-      map.setZoom(zoom);
+    // Fit bounds if requested and multiple markers
+    if (fitBounds && markers.length > 1) {
+      mapInstanceRef.current.fitBounds(bounds, { padding: 50 });
+    } else if (fitBounds && markers.length === 1) {
+      mapInstanceRef.current.setCenter({ lat: markers[0].lat, lng: markers[0].lng });
+      mapInstanceRef.current.setZoom(15);
     }
-  };
+  }, [markers, selectedMarkerId, isLoaded, fitBounds, onMarkerClick]);
+
+  const handleZoomIn = useCallback(() => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setZoom(mapInstanceRef.current.getZoom() + 1);
+    }
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setZoom(mapInstanceRef.current.getZoom() - 1);
+    }
+  }, []);
+
+  const handleRecenter = useCallback(() => {
+    if (mapInstanceRef.current && markers.length > 0) {
+      const bounds = new window.google.maps.LatLngBounds();
+      markers.forEach(m => bounds.extend({ lat: m.lat, lng: m.lng }));
+      mapInstanceRef.current.fitBounds(bounds, { padding: 50 });
+    } else if (mapInstanceRef.current) {
+      mapInstanceRef.current.setCenter(center);
+      mapInstanceRef.current.setZoom(zoom);
+    }
+  }, [center, zoom, markers]);
+
+  const toggleFullscreen = useCallback(() => {
+    setIsFullscreen(prev => !prev);
+  }, []);
 
   if (error) {
     return (
-      <div 
+      <div
         className={`flex items-center justify-center bg-gray-100 rounded-lg ${className}`}
         style={{ height }}
       >
         <div className="text-center p-8">
           <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500 mb-2">Map couldn't load</p>
-          <p className="text-sm text-gray-400">{error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Reload Page
-          </button>
+          <p className="text-gray-600 font-medium mb-2">Map couldn't load</p>
+          <p className="text-sm text-gray-500">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`relative rounded-lg overflow-hidden ${className}`}>
-      <div 
-        ref={mapRef} 
-        style={{ height }}
-        className="w-full"
+    <div
+      className={`relative rounded-lg overflow-hidden bg-gray-100 ${className} ${isFullscreen ? 'fixed inset-0 z-50 rounded-none' : ''}`}
+      style={isFullscreen ? {} : { height }}
+    >
+      <div
+        ref={mapRef}
+        className="w-full h-full"
+        style={isFullscreen ? { height: '100vh' } : { height }}
       />
-      
+
+      {/* Loading state */}
       {!isLoaded && (
-        <div 
-          className="absolute inset-0 flex items-center justify-center bg-gray-100"
-          style={{ height }}
-        >
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-500">Loading map...</p>
+            <div className="w-8 h-8 border-2 border-gray-300 border-t-primary rounded-full animate-spin mx-auto mb-3"></div>
+            <p className="text-sm text-gray-500">Loading map...</p>
           </div>
         </div>
       )}
 
-      {/* Custom Controls */}
+      {/* Controls */}
       {showControls && isLoaded && (
-        <div className="absolute top-4 right-4 flex flex-col gap-2">
-          <button
-            onClick={handleZoomIn}
-            className="bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-md hover:bg-white transition-colors"
-            title="Zoom In"
-          >
-            <ZoomIn size={16} className="text-gray-700" />
-          </button>
-          <button
-            onClick={handleZoomOut}
-            className="bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-md hover:bg-white transition-colors"
-            title="Zoom Out"
-          >
-            <ZoomOut size={16} className="text-gray-700" />
-          </button>
-          <button
-            onClick={handleRecenter}
-            className="bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-md hover:bg-white transition-colors"
-            title="Recenter"
-          >
-            <Navigation size={16} className="text-gray-700" />
-          </button>
-        </div>
-      )}
+        <>
+          {/* Zoom controls */}
+          <div className="absolute top-4 right-4 flex flex-col gap-1">
+            <button
+              onClick={handleZoomIn}
+              className="w-8 h-8 bg-white shadow-md rounded flex items-center justify-center hover:bg-gray-50 transition-colors"
+              aria-label="Zoom in"
+            >
+              <ZoomIn size={16} className="text-gray-700" />
+            </button>
+            <button
+              onClick={handleZoomOut}
+              className="w-8 h-8 bg-white shadow-md rounded flex items-center justify-center hover:bg-gray-50 transition-colors"
+              aria-label="Zoom out"
+            >
+              <ZoomOut size={16} className="text-gray-700" />
+            </button>
+          </div>
 
-      {/* Map Type Selector */}
-      {showControls && isLoaded && (
-        <div className="absolute bottom-4 left-4">
-          <select
-            onChange={(e) => map?.setMapTypeId(e.target.value)}
-            value={style}
-            className="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-md text-sm border-0 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="roadmap">Road Map</option>
-            <option value="satellite">Satellite</option>
-            <option value="hybrid">Hybrid</option>
-            <option value="terrain">Terrain</option>
-          </select>
-        </div>
+          {/* Other controls */}
+          <div className="absolute bottom-4 right-4 flex gap-2">
+            <button
+              onClick={handleRecenter}
+              className="w-8 h-8 bg-white shadow-md rounded flex items-center justify-center hover:bg-gray-50 transition-colors"
+              aria-label="Recenter map"
+            >
+              <Navigation size={16} className="text-gray-700" />
+            </button>
+            <button
+              onClick={toggleFullscreen}
+              className="w-8 h-8 bg-white shadow-md rounded flex items-center justify-center hover:bg-gray-50 transition-colors"
+              aria-label={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+            >
+              {isFullscreen ? (
+                <Minimize2 size={16} className="text-gray-700" />
+              ) : (
+                <Maximize2 size={16} className="text-gray-700" />
+              )}
+            </button>
+          </div>
+
+          {/* Marker count badge */}
+          {markers.length > 0 && (
+            <div className="absolute top-4 left-4 bg-white shadow-md rounded-full px-3 py-1">
+              <span className="text-sm font-medium text-gray-700">
+                {markers.length} {markers.length === 1 ? 'property' : 'properties'}
+              </span>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

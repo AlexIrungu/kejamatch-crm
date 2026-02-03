@@ -46,48 +46,186 @@
   <!-- <link rel="manifest" href="/site.webmanifest" /> -->
   <meta name="theme-color" content="#1e40af" />
   
-  <!-- Structured Data - Organization -->
+  <!-- Structured Data - Organization & RealEstateAgent -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": ["Organization", "RealEstateAgent"],
+    "@id": "https://kejamatch.com/#organization",
     "name": "KejaMatch",
+    "alternateName": "Keja Match",
     "url": "https://kejamatch.com",
-    "logo": "https://kejamatch.com/logo.png",
-    "description": "Premium real estate platform connecting buyers, sellers, and renters across Kenya",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://kejamatch.com/og-image.jpg",
+      "width": 1200,
+      "height": 630
+    },
+    "image": "https://kejamatch.com/og-image.jpg",
+    "description": "Premium real estate platform connecting buyers, sellers, and renters across Kenya. Find houses, apartments, land, commercial properties, and short-term rentals.",
+    "slogan": "Find Your Dream Home in Kenya",
+    "foundingDate": "2024",
+    "areaServed": {
+      "@type": "Country",
+      "name": "Kenya"
+    },
+    "serviceArea": [
+      {
+        "@type": "City",
+        "name": "Nairobi"
+      },
+      {
+        "@type": "City",
+        "name": "Mombasa"
+      },
+      {
+        "@type": "City",
+        "name": "Kisumu"
+      },
+      {
+        "@type": "City",
+        "name": "Nakuru"
+      }
+    ],
     "address": {
       "@type": "PostalAddress",
-      "addressCountry": "Kenya",
-      "addressLocality": "Nairobi"
+      "streetAddress": "Nairobi",
+      "addressLocality": "Nairobi",
+      "addressRegion": "Nairobi County",
+      "postalCode": "00100",
+      "addressCountry": "KE"
     },
-    "contactPoint": {
-      "@type": "ContactPoint",
-      "contactType": "Customer Service",
-      "url": "https://kejamatch.com/contact"
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": -1.286389,
+      "longitude": 36.817223
     },
+    "contactPoint": [
+      {
+        "@type": "ContactPoint",
+        "contactType": "Customer Service",
+        "url": "https://kejamatch.com/contact",
+        "availableLanguage": ["English", "Swahili"]
+      },
+      {
+        "@type": "ContactPoint",
+        "contactType": "Sales",
+        "url": "https://kejamatch.com/contact",
+        "availableLanguage": ["English", "Swahili"]
+      }
+    ],
+    "sameAs": [
+      "https://x.com/KejaMatch",
+      "https://www.instagram.com/kejamatch/"
+    ],
+    "knowsAbout": [
+      "Real Estate",
+      "Property Sales",
+      "Property Rentals",
+      "BNB Accommodations",
+      "Kenya Real Estate Market",
+      "Property Investment"
+    ],
+    "hasOfferCatalog": {
+      "@type": "OfferCatalog",
+      "name": "Real Estate Services",
+      "itemListElement": [
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Property Sales",
+            "description": "Buy and sell residential and commercial properties across Kenya"
+          }
+        },
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Property Rentals",
+            "description": "Find rental properties including apartments, houses, and commercial spaces"
+          }
+        },
+        {
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Short-Term Rentals",
+            "description": "Book BNBs and vacation rentals across Kenya"
+          }
+        }
+      ]
+    }
+  }
+  </script>
+
+  <!-- Structured Data - LocalBusiness for Local SEO -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    "@id": "https://kejamatch.com/#localbusiness",
+    "name": "KejaMatch",
+    "image": "https://kejamatch.com/og-image.jpg",
+    "url": "https://kejamatch.com",
+    "priceRange": "$$",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Nairobi",
+      "addressLocality": "Nairobi",
+      "addressRegion": "Nairobi County",
+      "postalCode": "00100",
+      "addressCountry": "KE"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": -1.286389,
+      "longitude": 36.817223
+    },
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        "opens": "08:00",
+        "closes": "18:00"
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": "Saturday",
+        "opens": "09:00",
+        "closes": "14:00"
+      }
+    ],
     "sameAs": [
       "https://x.com/KejaMatch",
       "https://www.instagram.com/kejamatch/"
     ]
   }
   </script>
-  
-  <!-- Structured Data - Website -->
+
+  <!-- Structured Data - Website with SearchAction -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebSite",
+    "@id": "https://kejamatch.com/#website",
     "name": "KejaMatch",
     "url": "https://kejamatch.com",
     "description": "Premium real estate properties and BNBs in Kenya",
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": {
-        "@type": "EntryPoint",
-        "urlTemplate": "https://kejamatch.com/properties?search={search_term_string}"
-      },
-      "query-input": "required name=search_term_string"
-    }
+    "publisher": {
+      "@id": "https://kejamatch.com/#organization"
+    },
+    "potentialAction": [
+      {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://kejamatch.com/properties?search={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    ],
+    "inLanguage": "en-KE"
   }
   </script>
   

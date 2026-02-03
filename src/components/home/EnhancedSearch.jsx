@@ -2,19 +2,32 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MapPin, X, Loader2, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { kenyanLocations, searchProperties } from '../../data/properties';
+import { searchProperties } from '../../data/properties';
 
 const EnhancedSearch = ({ onSearchResults, showResults = false, className = "" }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [propertyType, setPropertyType] = useState('Buy');
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [filteredLocations, setFilteredLocations] = useState([]);
+  const [predictions, setPredictions] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
+  const [autocompleteService, setAutocompleteService] = useState(null);
+  const [placesService, setPlacesService] = useState(null);
   
   const searchRef = useRef(null);
   const navigate = useNavigate();
+
+  // Initialize Google Places services
+  useEffect(() => {
+    if (window.google && window.google.maps && window.google.maps.places) {
+      setAutocompleteService(new window.google.maps.places.AutocompleteService());
+      
+      // Create a dummy map for PlacesService (required by Google)
+      const dummyMap = document.createElement('div');
+      setPlacesService(new window.google.maps.places.PlacesService(dummyMap));
+    }
+  }, []);
 
   // Debounce function
   const useDebounce = (value, delay) => {
@@ -43,20 +56,31 @@ const EnhancedSearch = ({ onSearchResults, showResults = false, className = "" }
     }
   }, []);
 
-  // Filter locations based on search query
+  // Fetch Google Places predictions
   useEffect(() => {
-    if (searchQuery.trim() && searchQuery.length > 1) {
-      const filtered = kenyanLocations.filter(location =>
-        location.name.toLowerCase().includes(searchQuery.toLowerCase())
-      ).slice(0, 6); // Limit to 6 suggestions
-      
-      setFilteredLocations(filtered);
-      setShowSuggestions(filtered.length > 0);
-    } else {
-      setFilteredLocations([]);
-      setShowSuggestions(false);
+    if (!autocompleteService || !searchQuery.trim() || searchQuery.length < 2) {
+      setPredictions([]);
+      setShowSuggestions(searchQuery.trim() === '' && recentSearches.length > 0);
+      return;
     }
-  }, [searchQuery]);
+
+    autocompleteService.getPlacePredictions(
+      {
+        input: searchQuery,
+        componentRestrictions: { country: 'ke' }, // Restrict to Kenya
+        types: ['geocode'], // Focus on geographic locations
+      },
+      (results, status) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK && results) {
+          setPredictions(results.slice(0, 6)); // Limit to 6 suggestions
+          setShowSuggestions(true);
+        } else {
+          setPredictions([]);
+          setShowSuggestions(recentSearches.length > 0);
+        }
+      }
+    );
+  }, [debouncedSearchQuery, autocompleteService]);
 
   // Handle search execution with debouncing
   useEffect(() => {
@@ -90,12 +114,50 @@ const EnhancedSearch = ({ onSearchResults, showResults = false, className = "" }
     localStorage.setItem('recentSearches', JSON.stringify(updated));
   };
 
-  // Handle location selection
-  const handleLocationSelect = (location) => {
-    setSearchQuery(location.name);
-    setSelectedLocation(location);
+  // Get place details from prediction
+  const getPlaceDetails = (placeId, description) => {
+    return new Promise((resolve) => {
+      if (!placesService) {
+        resolve({
+          name: description,
+          coordinates: null
+        });
+        return;
+      }
+
+      placesService.getDetails(
+        {
+          placeId: placeId,
+          fields: ['geometry', 'formatted_address', 'name']
+        },
+        (place, status) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK && place) {
+            resolve({
+              name: place.formatted_address || description,
+              coordinates: {
+                lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng()
+              }
+            });
+          } else {
+            resolve({
+              name: description,
+              coordinates: null
+            });
+          }
+        }
+      );
+    });
+  };
+
+  // Handle location selection from Google Places
+  const handlePredictionSelect = async (prediction) => {
+    const locationData = await getPlaceDetails(prediction.place_id, prediction.description);
+    
+    setSearchQuery(locationData.name);
+    setSelectedLocation(locationData);
     setShowSuggestions(false);
-    saveRecentSearch(location.name, location);
+    saveRecentSearch(locationData.name, locationData);
   };
 
   // Handle recent search selection
@@ -134,6 +196,10 @@ const EnhancedSearch = ({ onSearchResults, showResults = false, className = "" }
       });
       if (selectedLocation) {
         params.set('location', selectedLocation.name);
+        if (selectedLocation.coordinates) {
+          params.set('lat', selectedLocation.coordinates.lat);
+          params.set('lng', selectedLocation.coordinates.lng);
+        }
       }
       navigate(`/properties?${params.toString()}`);
     }
@@ -144,6 +210,7 @@ const EnhancedSearch = ({ onSearchResults, showResults = false, className = "" }
     setSearchQuery('');
     setSelectedLocation(null);
     setShowSuggestions(false);
+    setPredictions([]);
     if (showResults && onSearchResults) {
       onSearchResults([], { query: '', type: propertyType, location: null });
     }
@@ -151,9 +218,9 @@ const EnhancedSearch = ({ onSearchResults, showResults = false, className = "" }
 
   // Show suggestions when input is focused
   const handleInputFocus = () => {
-    if (searchQuery.trim()) {
-      setShowSuggestions(filteredLocations.length > 0);
-    } else if (recentSearches.length > 0) {
+    if (searchQuery.trim() && predictions.length > 0) {
+      setShowSuggestions(true);
+    } else if (!searchQuery.trim() && recentSearches.length > 0) {
       setShowSuggestions(true);
     }
   };
@@ -172,12 +239,12 @@ const EnhancedSearch = ({ onSearchResults, showResults = false, className = "" }
     };
   }, []);
 
-  // Popular locations for when there's no search query
+  // Popular locations (fallback when Google isn't loaded)
   const popularLocations = [
-    { name: 'Nairobi', coordinates: { lat: -1.2921, lng: 36.8219 } },
-    { name: 'Westlands', coordinates: { lat: -1.2676, lng: 36.8108 } },
-    { name: 'Karen', coordinates: { lat: -1.3197, lng: 36.6917 } },
-    { name: 'Kilimani', coordinates: { lat: -1.3032, lng: 36.7856 } },
+    { name: 'Nairobi, Kenya', coordinates: { lat: -1.2921, lng: 36.8219 } },
+    { name: 'Westlands, Nairobi', coordinates: { lat: -1.2676, lng: 36.8108 } },
+    { name: 'Karen, Nairobi', coordinates: { lat: -1.3197, lng: 36.6917 } },
+    { name: 'Kilimani, Nairobi', coordinates: { lat: -1.3032, lng: 36.7856 } },
   ];
 
   return (
@@ -209,12 +276,12 @@ const EnhancedSearch = ({ onSearchResults, showResults = false, className = "" }
             ))}
           </div>
 
-          {/* Search Input with Autocomplete */}
+          {/* Search Input with Google Places Autocomplete */}
           <div className="flex-1 relative">
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search property, area or state..."
+                placeholder="Search by location (e.g., Westlands, Karen, Nairobi)..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={handleInputFocus}
@@ -248,22 +315,32 @@ const EnhancedSearch = ({ onSearchResults, showResults = false, className = "" }
                   transition={{ duration: 0.2 }}
                   className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-80 overflow-y-auto"
                 >
-                  {/* Location suggestions when searching */}
-                  {searchQuery.trim() && filteredLocations.length > 0 && (
+                  {/* Google Places predictions */}
+                  {searchQuery.trim() && predictions.length > 0 && (
                     <div>
-                      <div className="px-4 py-2 text-sm font-semibold text-gray-500 bg-gray-50 border-b">
-                        Locations
+                      <div className="px-4 py-2 text-sm font-semibold text-gray-500 bg-gray-50 border-b flex items-center gap-2">
+                        <MapPin size={14} />
+                        Locations in Kenya
                       </div>
-                      {filteredLocations.map((location, index) => (
+                      {predictions.map((prediction) => (
                         <motion.button
-                          key={`location-${location.name}`}
+                          key={prediction.place_id}
                           type="button"
-                          onClick={() => handleLocationSelect(location)}
+                          onClick={() => handlePredictionSelect(prediction)}
                           whileHover={{ backgroundColor: '#f3f4f6' }}
                           className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 flex items-center gap-3"
                         >
-                          <MapPin size={16} className="text-secondary flex-shrink-0" />
-                          <span className="text-gray-800 font-medium">{location.name}</span>
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <MapPin size={14} className="text-secondary" />
+                          </div>
+                          <div className="flex-1">
+                            <span className="text-gray-800 font-medium block">
+                              {prediction.structured_formatting.main_text}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {prediction.structured_formatting.secondary_text}
+                            </span>
+                          </div>
                         </motion.button>
                       ))}
                     </div>
@@ -289,8 +366,10 @@ const EnhancedSearch = ({ onSearchResults, showResults = false, className = "" }
                           </div>
                           <div className="flex-1">
                             <span className="text-gray-800 font-medium">{recentSearch.query}</span>
-                            {recentSearch.location && (
-                              <div className="text-xs text-gray-500">{recentSearch.location.name}</div>
+                            {recentSearch.location && recentSearch.location.coordinates && (
+                              <div className="text-xs text-gray-500">
+                                {recentSearch.location.coordinates.lat.toFixed(4)}, {recentSearch.location.coordinates.lng.toFixed(4)}
+                              </div>
                             )}
                           </div>
                         </motion.button>
@@ -301,21 +380,37 @@ const EnhancedSearch = ({ onSearchResults, showResults = false, className = "" }
                   {/* Popular locations when no query and no recent searches */}
                   {!searchQuery.trim() && recentSearches.length === 0 && (
                     <div>
-                      <div className="px-4 py-2 text-sm font-semibold text-gray-500 bg-gray-50 border-b">
+                      <div className="px-4 py-2 text-sm font-semibold text-gray-500 bg-gray-50 border-b flex items-center gap-2">
+                        <TrendingUp size={14} />
                         Popular Locations
                       </div>
                       {popularLocations.map((location, index) => (
                         <motion.button
-                          key={`popular-${location.name}`}
+                          key={`popular-${index}`}
                           type="button"
-                          onClick={() => handleLocationSelect(location)}
+                          onClick={() => {
+                            setSearchQuery(location.name);
+                            setSelectedLocation(location);
+                            setShowSuggestions(false);
+                          }}
                           whileHover={{ backgroundColor: '#f3f4f6' }}
                           className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 flex items-center gap-3"
                         >
-                          <TrendingUp size={16} className="text-secondary flex-shrink-0" />
+                          <div className="w-8 h-8 bg-gradient-to-r from-secondary to-accent rounded-full flex items-center justify-center flex-shrink-0">
+                            <TrendingUp size={14} className="text-white" />
+                          </div>
                           <span className="text-gray-800 font-medium">{location.name}</span>
                         </motion.button>
                       ))}
+                    </div>
+                  )}
+
+                  {/* No results message */}
+                  {searchQuery.trim() && predictions.length === 0 && (
+                    <div className="px-4 py-8 text-center text-gray-500">
+                      <MapPin size={24} className="mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm">No locations found</p>
+                      <p className="text-xs text-gray-400 mt-1">Try a different search term</p>
                     </div>
                   )}
                 </motion.div>
