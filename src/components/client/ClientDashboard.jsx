@@ -86,9 +86,9 @@ const ClientDashboard = ({ client, onRefresh }) => {
           <div className="flex items-center justify-between">
             <span className="text-gray-600">Email Verification</span>
             <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-              client?.emailVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+              client?.isVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
             }`}>
-              {client?.emailVerified ? 'Verified' : 'Pending'}
+              {client?.isVerified ? 'Verified' : 'Pending'}
             </span>
           </div>
           <div className="flex items-center justify-between">

@@ -1,6 +1,43 @@
+# Robots.txt for KejaMatch - Kenya Real Estate Platform
+# https://kejamatch.com
+
+# Allow all crawlers
 User-agent: *
 Allow: /
+
+# Disallow private/authenticated areas
 Disallow: /admin/
+Disallow: /client-portal/
+Disallow: /agent-dashboard/
+Disallow: /api/
 Disallow: /private/
 
+# Disallow search and filter result pages (prevent duplicate content)
+Disallow: /*?*sort=
+Disallow: /*?*page=
+Disallow: /*?*filter=
+
+# Allow important static assets
+Allow: /assets/
+Allow: /*.js$
+Allow: /*.css$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.svg$
+Allow: /*.webp$
+
+# Crawl delay for politeness (in seconds)
+Crawl-delay: 1
+
+# Sitemap location
 Sitemap: https://kejamatch.com/sitemap.xml
+
+# Google specific
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Bing specific
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1

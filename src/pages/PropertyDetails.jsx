@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import ViewingRequestModal from "../components/viewings/ViewingRequestModal";
 import propertyService from "../services/propertyService";
+import clientService from "../services/clientService";
+import SEO from "../components/common/SEO";
 
 // Format price helper
 const formatPrice = (price, type) => {
@@ -162,8 +164,35 @@ const PropertyDetails = () => {
     }
   };
 
-  const toggleLike = () => {
-    setIsLiked(!isLiked);
+  // Check if property is saved on mount (for logged-in clients)
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (user?.role === 'client' && id) {
+      clientService.getSavedProperties()
+        .then((res) => {
+          const saved = (res.data || []).some((p) => p._id === id);
+          setIsLiked(saved);
+        })
+        .catch(() => {});
+    }
+  }, [id]);
+
+  const toggleLike = async () => {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user || user.role !== 'client') {
+      navigate('/client/login');
+      return;
+    }
+    try {
+      if (isLiked) {
+        await clientService.unsaveProperty(id);
+      } else {
+        await clientService.saveProperty(id);
+      }
+      setIsLiked(!isLiked);
+    } catch (err) {
+      console.error('Failed to toggle save:', err);
+    }
   };
 
   const handleBackClick = () => {
@@ -233,9 +262,42 @@ const PropertyDetails = () => {
     .filter(Boolean)
     .join(", ");
 
+  // Build SEO description
+  const seoDescription = property
+    ? `${property.bedrooms || ''} bedroom ${property.category || 'property'} ${property.listingType === 'Rent' ? 'for rent' : 'for sale'} in ${property.location?.area || property.location?.city || 'Kenya'}. ${property.bathrooms ? `${property.bathrooms} bathrooms.` : ''} ${property.size ? `${property.size} sq ft.` : ''} Price: KES ${property.price?.toLocaleString()}${property.listingType === 'Rent' ? '/month' : ''}.`
+    : '';
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Back Button */}
+    <>
+      {property && (
+        <SEO
+          title={`${property.title} - ${property.location?.area || property.location?.city || 'Kenya'}`}
+          description={seoDescription}
+          keywords={`${property.category} ${property.location?.area || ''} ${property.location?.city || ''} Kenya, ${property.listingType === 'Rent' ? 'rent' : 'buy'} property Kenya`}
+          canonicalUrl={`/properties/${id}`}
+          ogImage={property.images?.[0]}
+          ogType="product"
+          propertyData={{
+            title: property.title,
+            description: property.description,
+            price: property.price,
+            location: property.location,
+            images: property.images,
+            bedrooms: property.bedrooms,
+            bathrooms: property.bathrooms,
+            size: property.size,
+            coordinates: property.coordinates,
+            datePosted: property.createdAt
+          }}
+          breadcrumbs={[
+            { name: 'Home', url: '/' },
+            { name: 'Properties', url: '/properties' },
+            { name: property.title, url: `/properties/${id}` }
+          ]}
+        />
+      )}
+      <div className="min-h-screen bg-gray-50">
+        {/* Back Button */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -794,7 +856,8 @@ const PropertyDetails = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </>
   );
 };
 

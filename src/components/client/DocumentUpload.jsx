@@ -110,21 +110,15 @@ const DocumentUpload = ({ clientId, onUploadSuccess }) => {
       setSuccess('');
       setUploadProgress(0);
 
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 200);
-
-      const response = await clientService.uploadDocument(selectedFile, category, description);
-
-      clearInterval(progressInterval);
-      setUploadProgress(100);
+      const response = await clientService.uploadDocument(
+        selectedFile,
+        category,
+        description,
+        (progressEvent) => {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percent);
+        }
+      );
 
       if (response.success) {
         setSuccess('Document uploaded successfully!');

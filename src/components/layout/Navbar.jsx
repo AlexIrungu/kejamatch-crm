@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, X, ChevronRight, User, LogOut, LayoutDashboard } from 'lucide-react';
+import { Menu, X, ChevronRight, User, LogOut, LayoutDashboard, ChevronDown, Shield, UserCircle, Building2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../auth/AuthContext';
 import logoClear from '../../assets/clearbg.svg';
@@ -10,6 +10,10 @@ const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showLoginMenu, setShowLoginMenu] = useState(false);
+  const [showRegisterMenu, setShowRegisterMenu] = useState(false);
+  const loginRef = useRef(null);
+  const registerRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
@@ -22,11 +26,29 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu when route changes
+  // Close mobile menu and dropdowns when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setShowUserMenu(false);
+    setShowLoginMenu(false);
+    setShowRegisterMenu(false);
   }, [location.pathname]);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (loginRef.current && !loginRef.current.contains(e.target)) setShowLoginMenu(false);
+      if (registerRef.current && !registerRef.current.contains(e.target)) setShowRegisterMenu(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const roleBadgeColor = {
+    admin: 'bg-red-100 text-red-700',
+    agent: 'bg-blue-100 text-blue-700',
+    client: 'bg-green-100 text-green-700',
+  };
 
   const navLinks = [
     { path: '/', label: 'Home' },
@@ -154,7 +176,7 @@ const Navbar = () => {
                             <div className="px-4 py-3 border-b border-gray-100">
                               <p className="text-sm font-medium text-gray-900">{user?.name}</p>
                               <p className="text-xs text-gray-500">{user?.email}</p>
-                              <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary rounded">
+                              <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded capitalize ${roleBadgeColor[user?.role] || 'bg-gray-100 text-gray-700'}`}>
                                 {user?.role}
                               </span>
                             </div>
@@ -180,23 +202,81 @@ const Navbar = () => {
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
-                    <Link 
-                      to="/login"
-                      className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
-                        isScrolled
-                          ? 'text-gray-700 hover:text-primary hover:bg-gray-50'
-                          : 'text-white/90 hover:text-white hover:bg-white/10'
-                      }`}
-                    >
-                      Login
-                    </Link>
-                    <Link 
-                      to="/register"
-                      className="inline-flex items-center px-5 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transform hover:scale-[1.02] transition-all duration-200 shadow-sm hover:shadow-md"
-                    >
-                      Get Started
-                      <ChevronRight size={16} className="ml-1" />
-                    </Link>
+                    {/* Login Dropdown */}
+                    <div className="relative" ref={loginRef}>
+                      <button
+                        onClick={() => { setShowLoginMenu(!showLoginMenu); setShowRegisterMenu(false); }}
+                        className={`inline-flex items-center px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
+                          isScrolled
+                            ? 'text-gray-700 hover:text-primary hover:bg-gray-50'
+                            : 'text-white/90 hover:text-white hover:bg-white/10'
+                        }`}
+                      >
+                        Login
+                        <ChevronDown size={14} className={`ml-1 transition-transform duration-200 ${showLoginMenu ? 'rotate-180' : ''}`} />
+                      </button>
+                      <AnimatePresence>
+                        {showLoginMenu && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-2 overflow-hidden"
+                          >
+                            <Link to="/client/login" onClick={() => setShowLoginMenu(false)} className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                              <UserCircle size={18} className="mr-3 text-green-600" />
+                              <div>
+                                <p className="font-medium">Client Login</p>
+                                <p className="text-xs text-gray-400">Buy, rent or inquire</p>
+                              </div>
+                            </Link>
+                            <Link to="/login" onClick={() => setShowLoginMenu(false)} className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                              <Shield size={18} className="mr-3 text-blue-600" />
+                              <div>
+                                <p className="font-medium">Agent / Admin</p>
+                                <p className="text-xs text-gray-400">Manage listings & leads</p>
+                              </div>
+                            </Link>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    {/* Register Dropdown */}
+                    <div className="relative" ref={registerRef}>
+                      <button
+                        onClick={() => { setShowRegisterMenu(!showRegisterMenu); setShowLoginMenu(false); }}
+                        className="inline-flex items-center px-5 py-2.5 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transform hover:scale-[1.02] transition-all duration-200 shadow-sm hover:shadow-md"
+                      >
+                        Get Started
+                        <ChevronDown size={14} className={`ml-1 transition-transform duration-200 ${showRegisterMenu ? 'rotate-180' : ''}`} />
+                      </button>
+                      <AnimatePresence>
+                        {showRegisterMenu && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-2 overflow-hidden"
+                          >
+                            <Link to="/client/register" onClick={() => setShowRegisterMenu(false)} className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                              <UserCircle size={18} className="mr-3 text-green-600" />
+                              <div>
+                                <p className="font-medium">Register as Client</p>
+                                <p className="text-xs text-gray-400">Find your dream property</p>
+                              </div>
+                            </Link>
+                            <Link to="/register" onClick={() => setShowRegisterMenu(false)} className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                              <Building2 size={18} className="mr-3 text-blue-600" />
+                              <div>
+                                <p className="font-medium">Register as Agent</p>
+                                <p className="text-xs text-gray-400">List & manage properties</p>
+                              </div>
+                            </Link>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
                 )}
               </div>
@@ -316,19 +396,39 @@ const Navbar = () => {
                       </>
                     ) : (
                       <>
-                        <Link 
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Login</p>
+                        <Link
+                          to="/client/login"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center w-full border-2 border-green-600 text-green-700 px-6 py-3 rounded-xl font-semibold hover:bg-green-50 transition-all duration-200"
+                        >
+                          <UserCircle size={18} className="mr-2" />
+                          Client Login
+                        </Link>
+                        <Link
                           to="/login"
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className="flex items-center justify-center w-full border-2 border-primary text-primary px-6 py-3 rounded-xl font-semibold hover:bg-primary/5 transition-all duration-200"
+                          className="flex items-center w-full border-2 border-blue-600 text-blue-700 px-6 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-all duration-200"
                         >
-                          Login
+                          <Shield size={18} className="mr-2" />
+                          Agent / Admin Login
                         </Link>
-                        <Link 
-                          to="/register"
+
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 mt-4">Register</p>
+                        <Link
+                          to="/client/register"
                           onClick={() => setIsMobileMenuOpen(false)}
                           className="flex items-center justify-center w-full bg-primary text-white px-6 py-3 rounded-xl font-semibold hover:bg-primary/90 transition-all duration-200"
                         >
-                          Get Started
+                          Register as Client
+                          <ChevronRight size={16} className="ml-2" />
+                        </Link>
+                        <Link
+                          to="/register"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center justify-center w-full bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-200"
+                        >
+                          Register as Agent
                           <ChevronRight size={16} className="ml-2" />
                         </Link>
                       </>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import SEO from '../components/common/SEO';
 import { 
   Calendar, 
   Clock, 
@@ -196,6 +197,29 @@ const BlogDetail = () => {
   }
 
   return (
+    <>
+      {post && (
+        <SEO
+          title={`${post.title} | KejaMatch Blog`}
+          description={post.excerpt}
+          keywords={post.tags.join(', ')}
+          canonicalUrl={`/blog/${post.id}`}
+          ogImage={post.image}
+          ogType="article"
+          articleData={{
+            publishedTime: post.date,
+            modifiedTime: post.date,
+            author: post.author.name,
+            section: post.category,
+            tags: post.tags,
+          }}
+          breadcrumbs={[
+            { name: 'Home', url: '/' },
+            { name: 'Blog', url: '/blogs' },
+            { name: post.title, url: `/blog/${post.id}` }
+          ]}
+        />
+      )}
     <div className="min-h-screen bg-white">
       {/* Reading Progress Bar */}
       <div className="fixed top-0 left-0 w-full h-1 bg-gray-200 z-50">
@@ -721,6 +745,7 @@ const BlogDetail = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

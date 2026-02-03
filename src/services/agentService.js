@@ -128,6 +128,94 @@ const agentService = {
       throw error.response?.data || { success: false, message: 'Failed to add property interest' };
     }
   },
+
+  // =====================
+  // FOLLOW-UPS & DASHBOARD
+  // =====================
+
+  async getFollowUps() {
+    try {
+      const api = createAuthApi();
+      const response = await api.get('/api/agent/follow-ups');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to get follow-ups' };
+    }
+  },
+
+  async getActivityTimeline(limit = 20) {
+    try {
+      const api = createAuthApi();
+      const response = await api.get('/api/agent/activity-timeline', { params: { limit } });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to get activity timeline' };
+    }
+  },
+
+  async getUpcomingViewings() {
+    try {
+      const api = createAuthApi();
+      const response = await api.get('/api/agent/viewings/upcoming');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to get upcoming viewings' };
+    }
+  },
+
+  // =====================
+  // MESSAGING
+  // =====================
+
+  async getConversations() {
+    try {
+      const api = createAuthApi();
+      const response = await api.get('/api/agent/messages');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to get conversations' };
+    }
+  },
+
+  async getConversation(partnerId) {
+    try {
+      const api = createAuthApi();
+      const response = await api.get(`/api/agent/messages/${partnerId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to get conversation' };
+    }
+  },
+
+  async sendMessage(receiverId, content) {
+    try {
+      const api = createAuthApi();
+      const response = await api.post('/api/agent/messages', { receiverId, content });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to send message' };
+    }
+  },
+
+  async markAsRead(partnerId) {
+    try {
+      const api = createAuthApi();
+      const response = await api.put(`/api/agent/messages/${partnerId}/read`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to mark as read' };
+    }
+  },
+
+  async getUnreadCount() {
+    try {
+      const api = createAuthApi();
+      const response = await api.get('/api/agent/messages/unread-count');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to get unread count' };
+    }
+  },
 };
 
 export default agentService;

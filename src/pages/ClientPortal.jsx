@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { 
-  Home, FileText, User, LogOut, Bell, CheckCircle, 
-  AlertCircle, Clock, Upload, Download, Shield
+import { useNavigate, Link } from 'react-router-dom';
+import {
+  Home, FileText, User, LogOut, Bell, CheckCircle,
+  AlertCircle, Clock, Upload, Download, Shield, Heart, Calendar, MessageCircle
 } from 'lucide-react';
 import ClientDashboard from '../components/client/ClientDashboard';
 import InquiryTracker from '../components/client/InquiryTracker';
 import DocumentUpload from '../components/client/DocumentUpload';
 import DocumentList from '../components/client/DocumentList';
 import ProfileSettings from '../components/client/ProfileSettings';
+import SavedProperties from '../components/client/SavedProperties';
+import ViewingsTab from '../components/client/ViewingsTab';
+import MessagesTab from '../components/client/MessagesTab';
+import logo from '../assets/clearbluebg.svg';
 
 const ClientPortal = () => {
   const navigate = useNavigate();
@@ -70,6 +74,9 @@ const ClientPortal = () => {
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
+    { id: 'saved', label: 'Saved', icon: Heart },
+    { id: 'viewings', label: 'Viewings', icon: Calendar },
+    { id: 'messages', label: 'Messages', icon: MessageCircle },
     { id: 'inquiry', label: 'My Inquiry', icon: FileText },
     { id: 'documents', label: 'Documents', icon: Upload },
     { id: 'profile', label: 'Profile', icon: User },
@@ -155,12 +162,12 @@ const ClientPortal = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-primary">Kejamatch</h1>
+            <Link to="/" className="flex items-center">
+              <img src={logo} alt="Kejamatch" className="h-12 w-auto" />
               <span className="ml-2 px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-800 rounded">
                 CLIENT PORTAL
               </span>
-            </div>
+            </Link>
 
             {/* User Menu */}
             <div className="flex items-center space-x-4">
@@ -231,6 +238,15 @@ const ClientPortal = () => {
         <div className="animate-fadeIn">
           {activeTab === 'dashboard' && (
             <ClientDashboard client={client} stats={stats} onRefresh={fetchClientData} />
+          )}
+          {activeTab === 'saved' && (
+            <SavedProperties />
+          )}
+          {activeTab === 'viewings' && (
+            <ViewingsTab />
+          )}
+          {activeTab === 'messages' && (
+            <MessagesTab client={client} />
           )}
           {activeTab === 'inquiry' && (
             <InquiryTracker clientId={client?.id} />

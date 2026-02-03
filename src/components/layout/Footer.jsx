@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin, ArrowRight, Send } from 'lucide-react';
+import { Twitter, Instagram, Mail, Phone, MapPin, ArrowRight, Send } from 'lucide-react';
 import logo from '../../assets/clearblackbg.svg';
 
 const Footer = () => {
@@ -43,33 +43,23 @@ const Footer = () => {
               Your trusted partner in finding the perfect property in Kenya. We connect dreams with reality.
             </p>
             <div className="flex space-x-3">
-              <a 
-                href="#" 
+              <a
+                href="https://x.com/KejaMatch"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 bg-white/10 hover:bg-secondary flex items-center justify-center rounded-lg transition-all duration-300 hover:scale-110"
-                aria-label="Facebook"
-              >
-                <Facebook size={18} />
-              </a>
-              <a 
-                href="#" 
-                className="w-10 h-10 bg-white/10 hover:bg-secondary flex items-center justify-center rounded-lg transition-all duration-300 hover:scale-110"
-                aria-label="Twitter"
+                aria-label="Follow us on X (Twitter)"
               >
                 <Twitter size={18} />
               </a>
-              <a 
-                href="#" 
+              <a
+                href="https://www.instagram.com/kejamatch/"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 bg-white/10 hover:bg-secondary flex items-center justify-center rounded-lg transition-all duration-300 hover:scale-110"
-                aria-label="Instagram"
+                aria-label="Follow us on Instagram"
               >
                 <Instagram size={18} />
-              </a>
-              <a 
-                href="#" 
-                className="w-10 h-10 bg-white/10 hover:bg-secondary flex items-center justify-center rounded-lg transition-all duration-300 hover:scale-110"
-                aria-label="LinkedIn"
-              >
-                <Linkedin size={18} />
               </a>
             </div>
           </div>

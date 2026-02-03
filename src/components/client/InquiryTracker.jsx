@@ -32,12 +32,12 @@ const InquiryTracker = ({ clientId }) => {
 
   const getStatusInfo = (status) => {
     const statusMap = {
-      new: { label: 'New', color: 'blue', icon: Clock },
-      contacted: { label: 'Contacted', color: 'purple', icon: Phone },
-      qualified: { label: 'Qualified', color: 'indigo', icon: CheckCircle },
-      viewing: { label: 'Viewing Scheduled', color: 'orange', icon: Calendar },
-      won: { label: 'Successful', color: 'green', icon: CheckCircle },
-      lost: { label: 'Closed', color: 'red', icon: XCircle },
+      new: { label: 'New', badgeClass: 'bg-blue-100 text-blue-800', icon: Clock },
+      contacted: { label: 'Contacted', badgeClass: 'bg-purple-100 text-purple-800', icon: Phone },
+      qualified: { label: 'Qualified', badgeClass: 'bg-indigo-100 text-indigo-800', icon: CheckCircle },
+      viewing: { label: 'Viewing Scheduled', badgeClass: 'bg-orange-100 text-orange-800', icon: Calendar },
+      won: { label: 'Successful', badgeClass: 'bg-green-100 text-green-800', icon: CheckCircle },
+      lost: { label: 'Closed', badgeClass: 'bg-red-100 text-red-800', icon: XCircle },
     };
     return statusMap[status] || statusMap.new;
   };
@@ -85,7 +85,7 @@ const InquiryTracker = ({ clientId }) => {
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-2xl font-bold text-gray-900">My Inquiry</h3>
-          <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-${statusInfo.color}-100 text-${statusInfo.color}-800`}>
+          <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium ${statusInfo.badgeClass}`}>
             <StatusIcon className="w-4 h-4 mr-2" />
             {statusInfo.label}
           </span>

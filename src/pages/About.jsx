@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import SEO from '../components/common/SEO';
 import { motion } from 'framer-motion';
 import { 
   Target, 
@@ -114,9 +115,30 @@ const About = () => {
     }
   ];
 
+  // Transform FAQs for schema
+  const faqSchemaData = useMemo(() =>
+    faqs.map(faq => ({
+      question: faq.question,
+      answer: faq.answer
+    })),
+    [faqs]
+  );
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section */}
+    <>
+      <SEO
+        title="About Us - Kenya's Trusted Real Estate Platform"
+        description="Learn about KejaMatch, Kenya's premier real estate company. We help you find your dream home with expert agents, verified listings, and personalized service across Nairobi, Mombasa, and beyond."
+        keywords="about KejaMatch, real estate Kenya, property company Nairobi, trusted real estate agents Kenya"
+        canonicalUrl="/about"
+        faqData={faqSchemaData}
+        breadcrumbs={[
+          { name: 'Home', url: '/' },
+          { name: 'About Us', url: '/about' }
+        ]}
+      />
+      <div className="min-h-screen bg-white">
+        {/* Hero Section */}
       <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0">
@@ -457,9 +479,8 @@ const About = () => {
           </div>
         </div>
       </section>
-
-    
-    </div>
+      </div>
+    </>
   );
 };
 

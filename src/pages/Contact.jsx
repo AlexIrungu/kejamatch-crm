@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import SEO from '../components/common/SEO';
 import { motion } from 'framer-motion';
 import { 
   Mail, 
@@ -173,8 +174,19 @@ const Contact = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section */}
+    <>
+      <SEO
+        title="Contact Us - Get in Touch"
+        description="Contact KejaMatch for all your real estate needs in Kenya. Reach our friendly team for property inquiries, viewings, or investment advice. Visit our Nairobi office or call us today."
+        keywords="contact KejaMatch, real estate inquiry Kenya, property consultation Nairobi, reach us Kenya"
+        canonicalUrl="/contact"
+        breadcrumbs={[
+          { name: 'Home', url: '/' },
+          { name: 'Contact', url: '/contact' }
+        ]}
+      />
+      <div className="min-h-screen bg-white">
+        {/* Hero Section */}
       <section className="relative pt-32 pb-20 overflow-hidden bg-primary">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 left-10 w-32 h-32 border-4 border-white rounded-full"></div>
@@ -536,7 +548,8 @@ const Contact = () => {
           </motion.div>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 };
 

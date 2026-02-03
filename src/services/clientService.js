@@ -151,7 +151,7 @@ const clientService = {
   /**
    * Upload document
    */
-  async uploadDocument(file, category, description) {
+  async uploadDocument(file, category, description, onUploadProgress) {
     try {
       const api = createAuthApi();
       const formData = new FormData();
@@ -165,6 +165,7 @@ const clientService = {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        onUploadProgress,
       });
       return response.data;
     } catch (error) {
@@ -240,6 +241,108 @@ const clientService = {
       return response.data;
     } catch (error) {
       throw error.response?.data || { success: false, message: 'Failed to enable 2FA' };
+    }
+  },
+
+  // =====================
+  // SAVED PROPERTIES
+  // =====================
+
+  async getSavedProperties() {
+    try {
+      const api = createAuthApi();
+      const response = await api.get('/api/client/properties/saved');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to get saved properties' };
+    }
+  },
+
+  async saveProperty(propertyId) {
+    try {
+      const api = createAuthApi();
+      const response = await api.post(`/api/client/properties/${propertyId}/save`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to save property' };
+    }
+  },
+
+  async unsaveProperty(propertyId) {
+    try {
+      const api = createAuthApi();
+      const response = await api.delete(`/api/client/properties/${propertyId}/save`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to unsave property' };
+    }
+  },
+
+  // =====================
+  // VIEWINGS
+  // =====================
+
+  async getMyViewings() {
+    try {
+      const api = createAuthApi();
+      const response = await api.get('/api/client/viewings');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to get viewings' };
+    }
+  },
+
+  // =====================
+  // MESSAGING
+  // =====================
+
+  async getConversations() {
+    try {
+      const api = createAuthApi();
+      const response = await api.get('/api/client/messages');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to get conversations' };
+    }
+  },
+
+  async getConversation(partnerId) {
+    try {
+      const api = createAuthApi();
+      const response = await api.get(`/api/client/messages/${partnerId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to get conversation' };
+    }
+  },
+
+  async sendMessage(receiverId, content) {
+    try {
+      const api = createAuthApi();
+      const response = await api.post('/api/client/messages', { receiverId, content });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to send message' };
+    }
+  },
+
+  async markAsRead(partnerId) {
+    try {
+      const api = createAuthApi();
+      const response = await api.put(`/api/client/messages/${partnerId}/read`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to mark as read' };
+    }
+  },
+
+  async getUnreadCount() {
+    try {
+      const api = createAuthApi();
+      const response = await api.get('/api/client/messages/unread-count');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { success: false, message: 'Failed to get unread count' };
     }
   },
 

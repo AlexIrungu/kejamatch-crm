@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import SEO from '../components/common/SEO';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { 
@@ -264,9 +265,37 @@ const Properties = () => {
     return count;
   };
 
+  // Dynamic SEO based on filters
+  const seoTitle = useMemo(() => {
+    const parts = ['Properties'];
+    if (selectedType) parts.unshift(selectedType === 'Rent' ? 'Rent' : 'Buy');
+    const activeCategories = Object.entries(selectedCategories)
+      .filter(([_, isActive]) => isActive)
+      .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1));
+    if (activeCategories.length > 0) parts.push(activeCategories.join(', '));
+    if (searchQuery) parts.push(`in ${searchQuery}`);
+    return parts.join(' ') + ' | KejaMatch Kenya';
+  }, [selectedType, selectedCategories, searchQuery]);
+
+  const seoDescription = useMemo(() => {
+    const count = filteredProperties.length;
+    return `Browse ${count} ${selectedType === 'Rent' ? 'rental' : ''} properties ${searchQuery ? `in ${searchQuery}` : 'across Kenya'}. Find houses, apartments, land, and commercial properties with KejaMatch.`;
+  }, [filteredProperties.length, selectedType, searchQuery]);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
+    <>
+      <SEO
+        title={seoTitle}
+        description={seoDescription}
+        keywords="properties Kenya, houses for sale, apartments for rent, land for sale Kenya, commercial property Kenya, real estate listings"
+        canonicalUrl="/properties"
+        breadcrumbs={[
+          { name: 'Home', url: '/' },
+          { name: 'Properties', url: '/properties' }
+        ]}
+      />
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero Section */}
       <section className="relative h-[400px] md:h-[500px] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-black/40 z-10"></div>
@@ -662,7 +691,8 @@ const Properties = () => {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 };
 

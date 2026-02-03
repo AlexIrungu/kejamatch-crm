@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import SEO from "../components/common/SEO";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
@@ -50,7 +51,14 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen">
+    <>
+      <SEO
+        title="Find Your Dream Home in Kenya"
+        description="Discover premium real estate properties, luxury homes, apartments, and top-rated BNBs across Kenya. Browse properties for sale and rent in Nairobi, Mombasa, Kisumu, and beyond."
+        keywords="real estate Kenya, properties for sale Kenya, houses for rent Nairobi, apartments Kenya, BNB Kenya, luxury homes Kenya, property investment Kenya"
+        canonicalUrl="/"
+      />
+      <div className="min-h-screen">
       {/* Hero Section with Enhanced Search */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Background Image with Overlay */}
@@ -815,7 +823,8 @@ const Home = () => {
           </motion.div>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 };
 

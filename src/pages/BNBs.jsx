@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SEO from '../components/common/SEO';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MapPin, 
@@ -164,8 +165,19 @@ const applyFilters = () => {
   }));
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section with Search */}
+    <>
+      <SEO
+        title="BNBs & Short-Term Rentals in Kenya"
+        description="Book top-rated BNBs and short-term rentals across Kenya. Find cozy apartments, luxury villas, and unique stays in Nairobi, Mombasa, Diani, and beyond. Instant booking available."
+        keywords="BNB Kenya, short-term rentals Nairobi, vacation rentals Kenya, Airbnb alternative Kenya, holiday homes Mombasa, Diani beach rentals"
+        canonicalUrl="/bnbs"
+        breadcrumbs={[
+          { name: 'Home', url: '/' },
+          { name: 'BNBs', url: '/bnbs' }
+        ]}
+      />
+      <div className="min-h-screen bg-gray-50">
+        {/* Hero Section with Search */}
       <motion.section 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -679,6 +691,7 @@ const applyFilters = () => {
         }}
       />
     </div>
+    </>
   );
 };
 

@@ -10,39 +10,84 @@ const SEO = ({
   ogType = 'website',
   articleData = null,
   propertyData = null,
+  breadcrumbs = null,
+  faqData = null,
+  noIndex = false,
 }) => {
   const siteTitle = 'KejaMatch';
-  const fullTitle = title ? `${title} | ${siteTitle}` : `${siteTitle} - Premium Real Estate Properties & BNBs in Kenya`;
   const siteUrl = 'https://kejamatch.com';
+  const defaultDescription = 'Discover premium real estate properties, luxury homes, and top-rated BNBs in Kenya with KejaMatch. Your trusted partner for buying, selling, and renting properties.';
+  const defaultImage = `${siteUrl}/og-image.jpg`;
+
+  const fullTitle = title ? `${title} | ${siteTitle}` : `${siteTitle} - Premium Real Estate Properties & BNBs in Kenya`;
+  const metaDescription = description || defaultDescription;
   const fullCanonicalUrl = canonicalUrl ? `${siteUrl}${canonicalUrl}` : siteUrl;
+  const metaImage = ogImage || defaultImage;
 
   return (
     <Helmet>
       {/* Basic Meta Tags */}
       <title>{fullTitle}</title>
-      <meta name="description" content={description} />
+      <meta name="description" content={metaDescription} />
       {keywords && <meta name="keywords" content={keywords} />}
       <link rel="canonical" href={fullCanonicalUrl} />
+      {noIndex && <meta name="robots" content="noindex, nofollow" />}
 
       {/* Open Graph */}
       <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={description} />
+      <meta property="og:description" content={metaDescription} />
       <meta property="og:url" content={fullCanonicalUrl} />
       <meta property="og:type" content={ogType} />
-      {ogImage && <meta property="og:image" content={ogImage} />}
+      <meta property="og:image" content={metaImage} />
+      <meta property="og:image:width" content="1200" />
+      <meta property="og:image:height" content="630" />
+      <meta property="og:site_name" content={siteTitle} />
+      <meta property="og:locale" content="en_KE" />
 
-      {/* Property-specific structured data */}
+      {/* Twitter Card */}
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={fullTitle} />
+      <meta name="twitter:description" content={metaDescription} />
+      <meta name="twitter:image" content={metaImage} />
+      <meta name="twitter:site" content="@KejaMatch" />
+
+      {/* Breadcrumb Schema */}
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": breadcrumbs.map((item, index) => ({
+              "@type": "ListItem",
+              "position": index + 1,
+              "name": item.name,
+              "item": `${siteUrl}${item.url}`
+            }))
+          })}
+        </script>
+      )}
+
+      {/* Property/RealEstateListing Schema */}
       {propertyData && (
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "RealEstateAgent",
+            "@type": "RealEstateListing",
             "name": propertyData.title,
             "description": propertyData.description,
+            "url": fullCanonicalUrl,
+            "datePosted": propertyData.datePosted,
+            "image": propertyData.images || [],
             "address": {
               "@type": "PostalAddress",
-              "addressLocality": propertyData.location,
+              "addressLocality": propertyData.location?.area || propertyData.location,
+              "addressRegion": propertyData.location?.county,
               "addressCountry": "Kenya"
+            },
+            "geo": propertyData.coordinates && {
+              "@type": "GeoCoordinates",
+              "latitude": propertyData.coordinates.lat,
+              "longitude": propertyData.coordinates.lng
             },
             "offers": {
               "@type": "Offer",
@@ -50,17 +95,18 @@ const SEO = ({
               "priceCurrency": "KES",
               "availability": "https://schema.org/InStock"
             },
-            "image": propertyData.images?.[0],
-            "geo": propertyData.coordinates && {
-              "@type": "GeoCoordinates",
-              "latitude": propertyData.coordinates.lat,
-              "longitude": propertyData.coordinates.lng
+            "numberOfRooms": propertyData.bedrooms,
+            "numberOfBathroomsTotal": propertyData.bathrooms,
+            "floorSize": propertyData.size && {
+              "@type": "QuantitativeValue",
+              "value": propertyData.size,
+              "unitCode": "FTK"
             }
           })}
         </script>
       )}
 
-      {/* Article structured data for blogs */}
+      {/* Article Schema for Blogs */}
       {articleData && (
         <script type="application/ld+json">
           {JSON.stringify({
@@ -87,6 +133,24 @@ const SEO = ({
               "@type": "WebPage",
               "@id": fullCanonicalUrl
             }
+          })}
+        </script>
+      )}
+
+      {/* FAQ Schema */}
+      {faqData && faqData.length > 0 && (
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": faqData.map(faq => ({
+              "@type": "Question",
+              "name": faq.question,
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": faq.answer
+              }
+            }))
           })}
         </script>
       )}

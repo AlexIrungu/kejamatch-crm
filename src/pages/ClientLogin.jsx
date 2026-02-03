@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, LogIn, AlertCircle, Info } from 'lucide-react';
+import { useAuth } from '../components/auth/AuthContext';
 import SEO from '../components/common/SEO';
 
 const ClientLogin = () => {
   const navigate = useNavigate();
+  const { setAuthData } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -46,11 +48,12 @@ const ClientLogin = () => {
       }
 
       // Save token and user data
+      const userData = { ...data.data.client, role: 'client' };
       localStorage.setItem('authToken', data.data.token);
-      localStorage.setItem('user', JSON.stringify({
-        ...data.data.client,
-        role: 'client'
-      }));
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      // Update AuthContext state directly
+      setAuthData(userData);
 
       // Check verification status
       if (data.data.requiresVerification) {

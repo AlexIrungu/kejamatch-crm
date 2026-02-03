@@ -131,6 +131,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Directly set auth state (for client login which bypasses authService)
+  const setAuthData = (userData) => {
+    setUser(userData);
+    setIsAuthenticated(true);
+  };
+
   const value = {
     user,
     loading,
@@ -140,6 +146,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     updateProfile,
     checkAuth,
+    setAuthData,
   };
 
   // Show loading spinner while checking auth

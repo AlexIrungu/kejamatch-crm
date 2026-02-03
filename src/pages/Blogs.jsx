@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom'; // Add this import
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import SEO from '../components/common/SEO';
 import { 
   Search, 
   Calendar, 
@@ -88,7 +89,34 @@ const Blogs = () => {
     }
   };
 
+  // Dynamic SEO based on selected category
+  const seoTitle = useMemo(() => {
+    if (selectedCategory === 'All') {
+      return 'Real Estate Blog - Expert Insights & Market Trends Kenya';
+    }
+    return `${selectedCategory} - Real Estate Blog Kenya | KejaMatch`;
+  }, [selectedCategory]);
+
+  const seoDescription = useMemo(() => {
+    if (selectedCategory === 'All') {
+      return 'Expert real estate advice, market insights, buying guides, and investment tips for Kenya property market. Stay informed with KejaMatch blog articles.';
+    }
+    return `Read our ${selectedCategory.toLowerCase()} articles for Kenya real estate. Expert advice and actionable insights to help you navigate the property market.`;
+  }, [selectedCategory]);
+
   return (
+    <>
+      <SEO
+        title={seoTitle}
+        description={seoDescription}
+        keywords="real estate blog Kenya, property market insights, buying guide Kenya, real estate investment tips, Kenya housing market, property trends Nairobi"
+        canonicalUrl={selectedCategory === 'All' ? '/blogs' : `/blogs?category=${encodeURIComponent(selectedCategory)}`}
+        breadcrumbs={[
+          { name: 'Home', url: '/' },
+          { name: 'Blog', url: '/blogs' },
+          ...(selectedCategory !== 'All' ? [{ name: selectedCategory, url: `/blogs?category=${encodeURIComponent(selectedCategory)}` }] : [])
+        ]}
+      />
     <div className="min-h-screen bg-gray-50">
       {/* Enhanced Hero Section */}
       <motion.section 
@@ -440,8 +468,9 @@ const Blogs = () => {
         )}
       </div>
 
-      
+
     </div>
+    </>
   );
 };
 

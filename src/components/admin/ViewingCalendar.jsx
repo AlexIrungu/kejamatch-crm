@@ -22,6 +22,14 @@ const ViewingCalendar = () => {
   const [selectedViewing, setSelectedViewing] = useState(null);
   const [viewMode, setViewMode] = useState('month'); // 'month', 'week', 'list'
   const [stats, setStats] = useState(null);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [modalViewing, setModalViewing] = useState(null);
+  const [modalOutcome, setModalOutcome] = useState('Interested');
+  const [modalNotes, setModalNotes] = useState('');
+  const [modalReason, setModalReason] = useState('');
+  const [modalLoading, setModalLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     fetchViewings();
@@ -77,49 +85,63 @@ const ViewingCalendar = () => {
     }
   };
 
-  const handleCompleteViewing = async (viewing) => {
-    const outcome = prompt('Enter viewing outcome (e.g., "Interested", "Not interested", "Needs follow-up"):');
-    if (!outcome) return;
+  const openCompleteModal = (viewing) => {
+    setModalViewing(viewing);
+    setModalOutcome('Interested');
+    setModalNotes('');
+    setShowCompleteModal(true);
+  };
 
-    const notes = prompt('Any additional notes?') || '';
+  const openCancelModal = (viewing) => {
+    setModalViewing(viewing);
+    setModalReason('');
+    setShowCancelModal(true);
+  };
 
+  const handleCompleteViewing = async () => {
+    if (!modalOutcome) return;
+    setModalLoading(true);
     try {
       const response = await viewingService.completeViewing(
-        viewing.leadId,
-        viewing.viewingId,
-        { outcome, notes }
+        modalViewing.leadId,
+        modalViewing.viewingId,
+        { outcome: modalOutcome, notes: modalNotes }
       );
-
       if (response.success) {
         fetchViewings();
         fetchStats();
         setSelectedViewing(null);
-        alert('Viewing marked as completed!');
+        setShowCompleteModal(false);
+        setSuccessMessage('Viewing marked as completed!');
+        setTimeout(() => setSuccessMessage(''), 3000);
       }
     } catch (error) {
-      alert('Failed to complete viewing: ' + (error.message || 'Unknown error'));
+      setSuccessMessage('');
+    } finally {
+      setModalLoading(false);
     }
   };
 
-  const handleCancelViewing = async (viewing) => {
-    const reason = prompt('Reason for cancellation:');
-    if (reason === null) return;
-
+  const handleCancelViewing = async () => {
+    setModalLoading(true);
     try {
       const response = await viewingService.cancelViewing(
-        viewing.leadId,
-        viewing.viewingId,
-        reason
+        modalViewing.leadId,
+        modalViewing.viewingId,
+        modalReason
       );
-
       if (response.success) {
         fetchViewings();
         fetchStats();
         setSelectedViewing(null);
-        alert('Viewing cancelled');
+        setShowCancelModal(false);
+        setSuccessMessage('Viewing cancelled');
+        setTimeout(() => setSuccessMessage(''), 3000);
       }
     } catch (error) {
-      alert('Failed to cancel viewing: ' + (error.message || 'Unknown error'));
+      setSuccessMessage('');
+    } finally {
+      setModalLoading(false);
     }
   };
 
@@ -264,8 +286,8 @@ const ViewingCalendar = () => {
                 <ViewingCard
                   key={idx}
                   viewing={viewing}
-                  onComplete={() => handleCompleteViewing(viewing)}
-                  onCancel={() => handleCancelViewing(viewing)}
+                  onComplete={() => openCompleteModal(viewing)}
+                  onCancel={() => openCancelModal(viewing)}
                   onClick={() => setSelectedViewing(viewing)}
                 />
               ))
@@ -341,9 +363,111 @@ const ViewingCalendar = () => {
         <ViewingDetailModal
           viewing={selectedViewing}
           onClose={() => setSelectedViewing(null)}
-          onComplete={() => handleCompleteViewing(selectedViewing)}
-          onCancel={() => handleCancelViewing(selectedViewing)}
+          onComplete={() => openCompleteModal(selectedViewing)}
+          onCancel={() => openCancelModal(selectedViewing)}
         />
+      )}
+
+      {/* Success Toast */}
+      {successMessage && (
+        <div className="fixed bottom-6 right-6 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2">
+          <CheckCircle size={18} />
+          {successMessage}
+        </div>
+      )}
+
+      {/* Complete Viewing Modal */}
+      {showCompleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-primary mb-4">Complete Viewing</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              {modalViewing?.propertyName} — {modalViewing?.scheduledDate} at {modalViewing?.scheduledTime}
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Outcome</label>
+                <select
+                  value={modalOutcome}
+                  onChange={(e) => setModalOutcome(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent"
+                >
+                  <option value="Interested">Interested</option>
+                  <option value="Not interested">Not interested</option>
+                  <option value="Needs follow-up">Needs follow-up</option>
+                  <option value="Made offer">Made offer</option>
+                  <option value="Wants second viewing">Wants second viewing</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+                <textarea
+                  value={modalNotes}
+                  onChange={(e) => setModalNotes(e.target.value)}
+                  rows={3}
+                  placeholder="Any additional notes about this viewing..."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handleCompleteViewing}
+                  disabled={modalLoading}
+                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                >
+                  {modalLoading ? 'Saving...' : 'Mark Complete'}
+                </button>
+                <button
+                  onClick={() => setShowCompleteModal(false)}
+                  disabled={modalLoading}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Viewing Modal */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-md w-full p-6">
+            <h3 className="text-xl font-bold text-red-600 mb-4">Cancel Viewing</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              {modalViewing?.propertyName} — {modalViewing?.scheduledDate} at {modalViewing?.scheduledTime}
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reason for cancellation</label>
+                <textarea
+                  value={modalReason}
+                  onChange={(e) => setModalReason(e.target.value)}
+                  rows={3}
+                  placeholder="Why is this viewing being cancelled?"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={handleCancelViewing}
+                  disabled={modalLoading}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
+                  {modalLoading ? 'Cancelling...' : 'Confirm Cancel'}
+                </button>
+                <button
+                  onClick={() => setShowCancelModal(false)}
+                  disabled={modalLoading}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                >
+                  Go Back
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
