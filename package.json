@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:sitemap": "node scripts/generate-sitemap.js",
+    "build:sitemap": "node scripts/generate-sitemap.cjs",
     "build:all": "npm run build:sitemap && npm run build",
     "generate:favicons": "node scripts/generate-favicons.js",
     "lint": "eslint .",
@@ -23,6 +23,7 @@
     "axios": "^1.13.4",
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.543.0",
+    "pusher-js": "^8.4.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-helmet-async": "^2.0.5",

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MapPin, X, Loader2, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { searchProperties } from '../../data/properties';
+import { loadGoogleMapsAPI } from '../../utils/googleMapsLoader';
 
 const EnhancedSearch = ({ onSearchResults, showResults = false, className = "" }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -20,13 +21,22 @@ const EnhancedSearch = ({ onSearchResults, showResults = false, className = "" }
 
   // Initialize Google Places services
   useEffect(() => {
-    if (window.google && window.google.maps && window.google.maps.places) {
-      setAutocompleteService(new window.google.maps.places.AutocompleteService());
-      
-      // Create a dummy map for PlacesService (required by Google)
-      const dummyMap = document.createElement('div');
-      setPlacesService(new window.google.maps.places.PlacesService(dummyMap));
-    }
+    const initGoogleMaps = async () => {
+      try {
+        await loadGoogleMapsAPI();
+        if (window.google && window.google.maps && window.google.maps.places) {
+          setAutocompleteService(new window.google.maps.places.AutocompleteService());
+
+          // Create a dummy map for PlacesService (required by Google)
+          const dummyMap = document.createElement('div');
+          setPlacesService(new window.google.maps.places.PlacesService(dummyMap));
+        }
+      } catch (error) {
+        console.error('Failed to load Google Maps API:', error);
+      }
+    };
+
+    initGoogleMaps();
   }, []);
 
   // Debounce function

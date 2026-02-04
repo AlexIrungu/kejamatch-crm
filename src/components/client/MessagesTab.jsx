@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageCircle, Send, Loader2, User, ArrowLeft } from 'lucide-react';
 import clientService from '../../services/clientService';
-import { useSocket, useTypingIndicator } from '../../hooks/useSocket';
-import { useSocketContext } from '../../contexts/SocketContext';
+import { usePusher, useTypingIndicator } from '../../hooks/usePusher';
+import { usePusherContext } from '../../contexts/PusherContext';
 
 const MessagesTab = ({ client }) => {
   const [conversations, setConversations] = useState([]);
@@ -16,7 +16,7 @@ const MessagesTab = ({ client }) => {
   const typingTimeoutRef = useRef(null);
 
   const currentUserId = client?._id || client?.id;
-  const { isConnected } = useSocketContext();
+  const { isConnected } = usePusherContext();
 
   // Real-time message handler
   const handleNewMessage = useCallback((data) => {
@@ -27,13 +27,13 @@ const MessagesTab = ({ client }) => {
     fetchConversations();
   }, [activeConv]);
 
-  // Subscribe to real-time messages
-  useSocket('new_message', handleNewMessage);
+  // Subscribe to real-time messages via Pusher
+  usePusher('new_message', handleNewMessage);
 
   // Typing indicators
   const { startTyping, stopTyping } = useTypingIndicator(activeConv?.partnerId);
 
-  useSocket('user_typing', useCallback((data) => {
+  usePusher('user_typing', useCallback((data) => {
     if (activeConv && data.senderId === activeConv.partnerId) {
       setPartnerTyping(true);
       clearTimeout(typingTimeoutRef.current);
@@ -41,7 +41,7 @@ const MessagesTab = ({ client }) => {
     }
   }, [activeConv]));
 
-  useSocket('user_stop_typing', useCallback((data) => {
+  usePusher('user_stop_typing', useCallback((data) => {
     if (activeConv && data.senderId === activeConv.partnerId) {
       setPartnerTyping(false);
     }

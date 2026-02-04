@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter as Router } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider } from './components/auth/AuthContext'
-import { SocketProvider } from './contexts/SocketContext'
+import { PusherProvider } from './contexts/PusherContext'
 import './index.css'
 import App from './App.jsx'
 
@@ -12,9 +12,9 @@ createRoot(document.getElementById('root')).render(
     <HelmetProvider>
       <Router basename="/">
         <AuthProvider>
-          <SocketProvider>
+          <PusherProvider>
             <App />
-          </SocketProvider>
+          </PusherProvider>
         </AuthProvider>
       </Router>
     </HelmetProvider>

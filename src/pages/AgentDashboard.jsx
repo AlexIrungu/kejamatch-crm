@@ -122,7 +122,14 @@ const AgentDashboard = () => {
         <header className="bg-white shadow-md">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-4">
-              <h1 className="text-2xl font-bold text-primary">Kejamatch Agent Portal</h1>
+              <div className="flex items-center gap-3">
+                <img
+                  src="/clearblackbg.svg"
+                  alt="KejaMatch"
+                  className="h-12 w-auto"
+                />
+                <span className="text-2xl font-bold text-primary">Agent Portal</span>
+              </div>
               <div className="flex items-center gap-3">
                 <button onClick={handleBackToWebsite} className="flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors">
                   <Home className="w-4 h-4 mr-2" />
